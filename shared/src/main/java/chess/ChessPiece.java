@@ -3,6 +3,7 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -18,6 +19,20 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this.pieceColor = pieceColor;
         this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessPiece that = (ChessPiece) o;
+        return pieceColor == that.pieceColor && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceColor, type);
     }
 
     /**
@@ -84,8 +99,8 @@ class BishopMovesCalculator extends PieceMovesCalculator {
         // initialize the collection of moves to return
         Collection<ChessMove> moves = new ArrayList<ChessMove>();
         // tracks the direction
-        int[] rowDirection = {1,1,-1,-1};
-        int[] colDirection = {1,-1,1,-1};
+        int[] rowDirection = {1,-1,-1,1};
+        int[] colDirection = {1,1,-1,-1};
         for (int i = 0; i < 4; i++) {
             int row = position.getRow();
             int col = position.getColumn();
@@ -96,6 +111,8 @@ class BishopMovesCalculator extends PieceMovesCalculator {
                 moves.add(new ChessMove(position, endPosition, null));
             }
         }
+
         return moves;
     }
 }
+
