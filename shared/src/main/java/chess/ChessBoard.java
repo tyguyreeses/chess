@@ -32,7 +32,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return squares[position.getRow()][position.getRow()];
+        return squares[position.getRow()][position.getColumn()];
     }
 
     /**
