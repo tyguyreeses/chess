@@ -89,7 +89,7 @@ class BishopMovesCalculator extends PieceMovesCalculator {
         for (int i = 0; i < 4; i++) {
             int row = position.getRow();
             int col = position.getColumn();
-            while (row <= 8 && col <= 8) {
+            while (row < 8 && row > 1 && col < 8 && col > 1) {
                 row += rowDirection[i];
                 col += colDirection[i];
                 ChessPosition endPosition = new ChessPosition(row, col);
