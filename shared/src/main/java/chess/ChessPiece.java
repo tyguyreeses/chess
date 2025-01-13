@@ -72,22 +72,12 @@ public class ChessPiece {
         return PieceMovesCalculator.calculateMoves(this, board, position);
     }
 }
+
 // ChessPiece subclass for move calculation
 class PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessPiece piece, ChessBoard board, ChessPosition position) {
-        switch (piece.getPieceType()) {
-            case KING:
-                break;
-            case QUEEN:
-                break;
-            case BISHOP:
+        if (piece.getPieceType() == ChessPiece.PieceType.BISHOP) {
                 return BishopMovesCalculator.calculateMoves(board, position);
-            case KNIGHT:
-                break;
-            case ROOK:
-                break;
-            case PAWN:
-                break;
         }
         return null;
     }
@@ -96,23 +86,31 @@ class PieceMovesCalculator {
 // PieceMovesCalculator subclass for Bishop move calculation
 class BishopMovesCalculator extends PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+
         // initialize the collection of moves to return
-        Collection<ChessMove> moves = new ArrayList<ChessMove>();
+        Collection<ChessMove> validMoves = new ArrayList<ChessMove>();
+
         // tracks the direction
         int[] rowDirection = {1,-1,-1,1};
         int[] colDirection = {1,1,-1,-1};
+
+        // loops over each diagonal direction
         for (int i = 0; i < 4; i++) {
+
             int row = position.getRow();
             int col = position.getColumn();
+
+            // goes in a diagonal line, storing each valid move
             while (row < 8 && row > 1 && col < 8 && col > 1) {
                 row += rowDirection[i];
                 col += colDirection[i];
+
                 ChessPosition endPosition = new ChessPosition(row, col);
-                moves.add(new ChessMove(position, endPosition, null));
+                validMoves.add(new ChessMove(position, endPosition, null));
             }
         }
 
-        return moves;
+        return validMoves;
     }
 }
 
