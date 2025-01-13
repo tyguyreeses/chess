@@ -66,7 +66,7 @@ class PieceMovesCalculator {
             case QUEEN:
                 break;
             case BISHOP:
-                break;
+                return BishopMovesCalculator.calculateMoves(board, position);
             case KNIGHT:
                 break;
             case ROOK:
@@ -75,5 +75,27 @@ class PieceMovesCalculator {
                 break;
         }
         return null;
+    }
+}
+
+// PieceMovesCalculator subclass for Bishop move calculation
+class BishopMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+        // initialize the collection of moves to return
+        Collection<ChessMove> moves = new ArrayList<ChessMove>();
+        // tracks the direction
+        int[] rowDirection = {1,1,-1,-1};
+        int[] colDirection = {1,-1,1,-1};
+        for (int i = 0; i < 4; i++) {
+            int row = position.getRow();
+            int col = position.getColumn();
+            while (row <= 8 && col <= 8) {
+                row += rowDirection[i];
+                col += colDirection[i];
+                ChessPosition endPosition = new ChessPosition(row, col);
+                moves.add(new ChessMove(position, endPosition, null));
+            }
+        }
+        return moves;
     }
 }
