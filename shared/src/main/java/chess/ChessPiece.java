@@ -96,7 +96,7 @@ class BishopMovesCalculator extends PieceMovesCalculator {
 
         // loops over each diagonal direction
         for (int i = 0; i < 4; i++) {
-
+            // retrieves the row and column indices
             int row = position.getRow();
             int col = position.getColumn();
 
