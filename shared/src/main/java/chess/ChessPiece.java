@@ -79,6 +79,7 @@ class PieceMovesCalculator {
             ChessPiece piece,
             ChessBoard board,
             ChessPosition position) {
+
         if (piece.getPieceType() == ChessPiece.PieceType.BISHOP) {
                 return BishopMovesCalculator.calculateMoves(board, position);
         }
@@ -91,7 +92,7 @@ class BishopMovesCalculator extends PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
 
         // initialize the collection of moves to return
-        Collection<ChessMove> validMoves = new ArrayList<ChessMove>();
+        Collection<ChessMove> validMoves = new ArrayList<>();
 
         // tracks the direction
         int[] rowDirection = {1,-1,-1,1};
