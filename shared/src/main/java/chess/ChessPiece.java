@@ -75,7 +75,10 @@ public class ChessPiece {
 
 // ChessPiece subclass for move calculation
 class PieceMovesCalculator {
-    static Collection<ChessMove> calculateMoves(ChessPiece piece, ChessBoard board, ChessPosition position) {
+    static Collection<ChessMove> calculateMoves(
+            ChessPiece piece,
+            ChessBoard board,
+            ChessPosition position) {
         if (piece.getPieceType() == ChessPiece.PieceType.BISHOP) {
                 return BishopMovesCalculator.calculateMoves(board, position);
         }
