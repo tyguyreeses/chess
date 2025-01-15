@@ -2,7 +2,6 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -76,10 +75,83 @@ public class ChessPiece {
 // ChessPiece subclass for move calculation
 class PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessPiece piece, ChessBoard board, ChessPosition position) {
-        if (piece.getPieceType() == ChessPiece.PieceType.BISHOP) {
+        switch (piece.getPieceType()) {
+            case KING:
+                return KingMovesCalculator.calculateMoves(board, position);
+            case QUEEN:
+                return QueenMovesCalculator.calculateMoves(board, position);
+            case BISHOP:
                 return BishopMovesCalculator.calculateMoves(board, position);
+            case KNIGHT:
+                return KnightMovesCalculator.calculateMoves(board, position);
+            case ROOK:
+                return RookMovesCalculator.calculateMoves(board, position);
+            case PAWN:
+                return new ArrayList<>();
         }
         return null;
+    }
+}
+
+// PieceMovesCalculator subclass for King move calculation
+class KingMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+        // initialize the collection of moves to return
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        // tracks the diagonal and orthogonal directions
+        int[][] rowDirection = {{1, -1, -1, 1}, {1, -1, 0, 0}};
+        int[][] colDirection = {{1, -1, 1, -1}, {0, 0, 1, -1}};
+
+        for (int i = 0; i < 2; i++) {
+            // loops over each direction
+            for (int j = 0; j < 4; j++) {
+                // retrieves the row and column indices
+                int row = position.getRow();
+                int col = position.getColumn();
+
+                row += rowDirection[i][j];
+                col += colDirection[i][j];
+
+                // catch if it starts on an edge
+                if (DetermineInBounds.inBounds(row, col)) {
+                    ChessPosition endPosition = new ChessPosition(row, col);
+
+                    // if the square is occupied by a piece
+                    if (board.getPiece(endPosition) != null) {
+                        // if it can attack that piece
+                        if (CalculatePotentialAttack.canAttack(board, position, endPosition)) {
+                            // add it to valid moves
+                            validMoves.add(new ChessMove(position, endPosition, null));
+                        }
+                    }
+                    else validMoves.add(new ChessMove(position, endPosition, null));
+                }
+            }
+        }
+        return validMoves;
+    }
+}
+
+// PieceMovesCalculator subclass for Queen move calculation
+class QueenMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+
+        // tracks the diagonal directions
+        int[] rowDiagonal = {1, -1, -1, 1};
+        int[] colDiagonal = {1, 1, -1, -1};
+        // calculates diagonal moves
+        Collection<ChessMove> totalMoveSet = DirectionalMovesCalculator.calculateMoves(rowDiagonal, colDiagonal, board, position);
+
+        // tracks the orthogonal directions
+        int[] rowOrthogonal = {0, 0, -1, 1};
+        int[] colOrthogonal = {1, -1, 0, 0};
+        // calculates orthogonal moves
+        Collection<ChessMove> orthogonalMoves = DirectionalMovesCalculator.calculateMoves(rowOrthogonal, colOrthogonal, board, position);
+
+        // adds orthogonal moves to diagonal moves
+        totalMoveSet.addAll(orthogonalMoves);
+        return totalMoveSet;
     }
 }
 
@@ -87,12 +159,59 @@ class PieceMovesCalculator {
 class BishopMovesCalculator extends PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
 
-        // initialize the collection of moves to return
-        Collection<ChessMove> validMoves = new ArrayList<>();
-
         // tracks the direction
         int[] rowDirection = {1, -1, -1, 1};
         int[] colDirection = {1, 1, -1, -1};
+
+        return DirectionalMovesCalculator.calculateMoves(rowDirection, colDirection, board, position);
+    }
+}
+
+// PieceMovesCalculator subclass for Knight move calculation
+class KnightMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+        // initialize the collection of moves to return
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        // tracks the diagonal and orthogonal directions
+        int[] rowDirection = {2, 2, -2, -2, 1, 1, -1, -1};
+        int[] colDirection = {-1, 1, -1, 1, -2, 2, -2, 2};
+
+        // loops over each direction
+        for (int j = 0; j < 8; j++) {
+            // retrieves the row and column indices
+            int row = position.getRow();
+            int col = position.getColumn();
+
+            row += rowDirection[j];
+            col += colDirection[j];
+
+            // catch if it starts on an edge
+            if (DetermineInBounds.inBounds(row, col)) {
+                ChessPosition endPosition = new ChessPosition(row, col);
+
+                // if the square is occupied by a piece
+                if (board.getPiece(endPosition) != null) {
+                    // if it can attack that piece
+                    if (CalculatePotentialAttack.canAttack(board, position, endPosition)) {
+                        // add it to valid moves
+                        validMoves.add(new ChessMove(position, endPosition, null));
+                    }
+                }
+                else validMoves.add(new ChessMove(position, endPosition, null));
+            }
+        }
+        return validMoves;
+    }
+}
+
+// PieceMovesCalculator subclass for Rook move calculation
+class RookMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+
+        // tracks the direction
+        int[] rowDirection = {0, 0, -1, 1};
+        int[] colDirection = {1, -1, 0, 0};
 
         return DirectionalMovesCalculator.calculateMoves(rowDirection, colDirection, board, position);
     }
@@ -107,6 +226,7 @@ class CalculatePotentialAttack {
     }
 }
 
+// class to calculate moves in straight lines
 class DirectionalMovesCalculator {
     static Collection<ChessMove> calculateMoves (int[] rowDirection, int[] colDirection, ChessBoard board, ChessPosition position) {
 
@@ -120,10 +240,15 @@ class DirectionalMovesCalculator {
             int col = position.getColumn();
 
             // goes in a line, storing each valid move
-            while (row < 8 && row > 1 && col < 8 && col > 1) {
+            while (row <= 8 && row >= 1 && col <= 8 && col >= 1) {
 
                 row += rowDirection[i];
                 col += colDirection[i];
+
+                // catch if it starts on an edge
+                if (row>8 || row<1 || col>8 || col<1) {
+                    break;
+                }
 
                 ChessPosition endPosition = new ChessPosition(row, col);
 
@@ -141,5 +266,13 @@ class DirectionalMovesCalculator {
             }
         }
         return validMoves;
+    }
+}
+
+// class to determine if move is in bounds
+class DetermineInBounds {
+    static boolean inBounds(int row, int col) {
+        // return true if in bounds
+        return row <= 8 && row >= 1 && col <= 8 && col >= 1;
     }
 }
