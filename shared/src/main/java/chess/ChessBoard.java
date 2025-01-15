@@ -101,5 +101,3 @@ public class ChessBoard {
         return Arrays.deepHashCode(squares);
     }
 }
-
-// TESTING AUTOGRADER COMMIT COUNT
