@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -11,7 +12,7 @@ import java.util.Objects;
  */
 public class ChessBoard {
 
-    private ChessPiece[][] squares = new ChessPiece[9][9];
+    private final ChessPiece[][] squares = new ChessPiece[9][9];
 
     public ChessBoard() {
         
@@ -43,7 +44,47 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        throw new RuntimeException("Not implemented");
+        // clear initial empty squares
+        for (int i = 3; i < 6; i++) {
+            for (int j = 0; j < 9; j++) {
+                squares[i][j] = null;
+            }
+        }
+        // list of back row pieces
+        ArrayList<ChessPiece.PieceType> backRow = new ArrayList<>();
+        backRow.add(ChessPiece.PieceType.ROOK); // filler object
+        backRow.add(ChessPiece.PieceType.ROOK);
+        backRow.add(ChessPiece.PieceType.KNIGHT);
+        backRow.add(ChessPiece.PieceType.BISHOP);
+        backRow.add(ChessPiece.PieceType.QUEEN);
+        backRow.add(ChessPiece.PieceType.KING);
+        backRow.add(ChessPiece.PieceType.BISHOP);
+        backRow.add(ChessPiece.PieceType.KNIGHT);
+        backRow.add(ChessPiece.PieceType.ROOK);
+
+        // add white pieces
+        for (int col = 1; col < 9; col++) {
+            ChessPiece piece = new ChessPiece(ChessGame.TeamColor.WHITE, backRow.get(col));
+            ChessPiece pawn = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
+            // adds the back row piece
+            ChessPosition position = new ChessPosition(1,col);
+            addPiece(position, piece);
+            // adds the pawn
+            ChessPosition pawnPos = new ChessPosition(2, col);
+            addPiece(pawnPos, pawn);
+        }
+        // add black pieces
+        for (int col = 1; col < 9; col++) {
+            ChessPiece piece = new ChessPiece(ChessGame.TeamColor.BLACK, backRow.get(col));
+            ChessPiece pawn = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
+            // adds the back row piece
+            ChessPosition position = new ChessPosition(8,col);
+            addPiece(position, piece);
+            // adds the pawn
+            ChessPosition pawnPos = new ChessPosition(7, col);
+            addPiece(pawnPos, pawn);
+        }
+
     }
 
     @Override
