@@ -255,7 +255,7 @@ class PawnMovesCalculator extends PieceMovesCalculator {
         // check diagonals for attacking
         ChessPosition leftAttack = new ChessPosition(row + step, col - 1);
         ChessPosition rightAttack = new ChessPosition(row+step,col + 1);
-        Collection<ChessMove> attackMoves = new ArrayList<>();
+        Collection<ChessMove> attackMoves;
 
         if (DetermineInBounds.inBounds(leftAttack.getRow(), leftAttack.getColumn())) {
             attackMoves = CalculatePawnAttack.calculateAttack(board, position, leftAttack, piece.getTeamColor());
