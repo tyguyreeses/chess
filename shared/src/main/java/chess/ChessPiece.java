@@ -94,13 +94,32 @@ class BishopMovesCalculator extends PieceMovesCalculator {
         int[] rowDirection = {1, -1, -1, 1};
         int[] colDirection = {1, 1, -1, -1};
 
-        // loops over each diagonal direction
+        return DirectionalMovesCalculator.calculateMoves(rowDirection, colDirection, board, position);
+    }
+}
+
+// class to calculate whether a piece can be taken
+class CalculatePotentialAttack {
+    static boolean canAttack(ChessBoard board, ChessPosition position1, ChessPosition position2) {
+        ChessPiece piece = board.getPiece(position1);
+        ChessPiece opponent = board.getPiece(position2);
+        return piece.getTeamColor() != opponent.getTeamColor();
+    }
+}
+
+class DirectionalMovesCalculator {
+    static Collection<ChessMove> calculateMoves (int[] rowDirection, int[] colDirection, ChessBoard board, ChessPosition position) {
+
+        // initialize the collection of moves to return
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        // loops over each direction
         for (int i = 0; i < 4; i++) {
             // retrieves the row and column indices
             int row = position.getRow();
             int col = position.getColumn();
 
-            // goes in a diagonal line, storing each valid move
+            // goes in a line, storing each valid move
             while (row < 8 && row > 1 && col < 8 && col > 1) {
 
                 row += rowDirection[i];
@@ -115,22 +134,12 @@ class BishopMovesCalculator extends PieceMovesCalculator {
                         // add it to valid moves
                         validMoves.add(new ChessMove(position, endPosition, null));
                     }
-                    // then ignore the rest of the diagonal
+                    // then ignore the rest of the line
                     break;
                 }
                 validMoves.add(new ChessMove(position, endPosition, null));
             }
         }
-
         return validMoves;
-    }
-}
-
-// class to calculate whether a piece can be taken
-class CalculatePotentialAttack {
-    static boolean canAttack(ChessBoard board, ChessPosition position1, ChessPosition position2) {
-        ChessPiece piece = board.getPiece(position1);
-        ChessPiece opponent = board.getPiece(position2);
-        return piece.getTeamColor() != opponent.getTeamColor();
     }
 }
