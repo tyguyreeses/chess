@@ -75,21 +75,14 @@ public class ChessPiece {
 // ChessPiece subclass for move calculation
 class PieceMovesCalculator {
     static Collection<ChessMove> calculateMoves(ChessPiece piece, ChessBoard board, ChessPosition position) {
-        switch (piece.getPieceType()) {
-            case KING:
-                return KingMovesCalculator.calculateMoves(board, position);
-            case QUEEN:
-                return QueenMovesCalculator.calculateMoves(board, position);
-            case BISHOP:
-                return BishopMovesCalculator.calculateMoves(board, position);
-            case KNIGHT:
-                return KnightMovesCalculator.calculateMoves(board, position);
-            case ROOK:
-                return RookMovesCalculator.calculateMoves(board, position);
-            case PAWN:
-                return PawnMovesCalculator.calculateMoves(board, position);
-        }
-        return null;
+        return switch (piece.getPieceType()) {
+            case KING -> KingMovesCalculator.calculateMoves(board, position);
+            case QUEEN -> QueenMovesCalculator.calculateMoves(board, position);
+            case BISHOP -> BishopMovesCalculator.calculateMoves(board, position);
+            case KNIGHT -> KnightMovesCalculator.calculateMoves(board, position);
+            case ROOK -> RookMovesCalculator.calculateMoves(board, position);
+            case PAWN -> PawnMovesCalculator.calculateMoves(board, position);
+        };
     }
 }
 
@@ -244,7 +237,7 @@ class PawnMovesCalculator extends PieceMovesCalculator {
                 validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.KNIGHT));
                 validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.ROOK));
             }
-
+            // if the square in front is in bounds
             else if (row + step < 8 && row + step > 1) {
                 // if initial move
                 if ((row == 2 && step > 0) || (row == 7 && step < 0)) {
@@ -260,20 +253,18 @@ class PawnMovesCalculator extends PieceMovesCalculator {
 
         }
         // check diagonals for attacking
+        ChessPosition leftAttack = new ChessPosition(row + step, col - 1);
+        ChessPosition rightAttack = new ChessPosition(row+step,col + 1);
+        Collection<ChessMove> attackMoves = new ArrayList<>();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        if (DetermineInBounds.inBounds(leftAttack.getRow(), leftAttack.getColumn())) {
+            attackMoves = CalculatePawnAttack.calculateAttack(board, position, leftAttack, piece.getTeamColor());
+            validMoves.addAll(attackMoves);
+        }
+        if (DetermineInBounds.inBounds(rightAttack.getRow(), rightAttack.getColumn())) {
+            attackMoves = CalculatePawnAttack.calculateAttack(board, position, rightAttack, piece.getTeamColor());
+            validMoves.addAll(attackMoves);
+        }
         return validMoves;
     }
 }
@@ -335,5 +326,37 @@ class DetermineInBounds {
     static boolean inBounds(int row, int col) {
         // return true if in bounds
         return row <= 8 && row >= 1 && col <= 8 && col >= 1;
+    }
+}
+
+// class to check diagonal attack spaces for pawns
+class CalculatePawnAttack {
+    static Collection<ChessMove> calculateAttack(ChessBoard board, ChessPosition position1, ChessPosition position2, ChessGame.TeamColor color) {
+
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+
+        int row = position1.getRow();
+        int step = 1;
+        // if black, change step to -1
+        if (color == ChessGame.TeamColor.BLACK) {
+            step = -1;
+        }
+
+        // check if in bounds
+        if (DetermineInBounds.inBounds(position2.getRow(), position2.getColumn())) {
+            // if there's a piece in the attacking location
+            if (board.getPiece(position2) != null) {
+                if(CalculatePotentialAttack.canAttack(board, position1, position2)) {
+                    if (row+step == 8 || row+step == 1) {
+                        validMoves.add(new ChessMove(position1, position2, ChessPiece.PieceType.QUEEN));
+                        validMoves.add(new ChessMove(position1, position2, ChessPiece.PieceType.BISHOP));
+                        validMoves.add(new ChessMove(position1, position2, ChessPiece.PieceType.KNIGHT));
+                        validMoves.add(new ChessMove(position1, position2, ChessPiece.PieceType.ROOK));
+                    } else validMoves.add(new ChessMove(position1, position2, null));
+                }
+            }
+        }
+        return validMoves;
     }
 }
