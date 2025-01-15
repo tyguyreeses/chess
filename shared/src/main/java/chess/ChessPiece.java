@@ -91,8 +91,8 @@ class BishopMovesCalculator extends PieceMovesCalculator {
         Collection<ChessMove> validMoves = new ArrayList<>();
 
         // tracks the direction
-        int[] rowDirection = {1,-1,-1,1};
-        int[] colDirection = {1,1,-1,-1};
+        int[] rowDirection = {1, -1, -1, 1};
+        int[] colDirection = {1, 1, -1, -1};
 
         // loops over each diagonal direction
         for (int i = 0; i < 4; i++) {
@@ -102,10 +102,22 @@ class BishopMovesCalculator extends PieceMovesCalculator {
 
             // goes in a diagonal line, storing each valid move
             while (row < 8 && row > 1 && col < 8 && col > 1) {
+
                 row += rowDirection[i];
                 col += colDirection[i];
 
                 ChessPosition endPosition = new ChessPosition(row, col);
+
+                // if the square is occupied by a piece
+                if (board.getPiece(endPosition) != null) {
+                    // if it can attack that piece
+                    if (CalculatePotentialAttack.canAttack(board, position, endPosition)) {
+                        // add it to valid moves
+                        validMoves.add(new ChessMove(position, endPosition, null));
+                    }
+                    // then ignore the rest of the diagonal
+                    break;
+                }
                 validMoves.add(new ChessMove(position, endPosition, null));
             }
         }
@@ -114,3 +126,11 @@ class BishopMovesCalculator extends PieceMovesCalculator {
     }
 }
 
+// class to calculate whether a piece can be taken
+class CalculatePotentialAttack {
+    static boolean canAttack(ChessBoard board, ChessPosition position1, ChessPosition position2) {
+        ChessPiece piece = board.getPiece(position1);
+        ChessPiece opponent = board.getPiece(position2);
+        return piece.getTeamColor() != opponent.getTeamColor();
+    }
+}
