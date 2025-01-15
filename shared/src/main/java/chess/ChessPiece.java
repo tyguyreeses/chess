@@ -87,7 +87,7 @@ class PieceMovesCalculator {
             case ROOK:
                 return RookMovesCalculator.calculateMoves(board, position);
             case PAWN:
-                return new ArrayList<>();
+                return PawnMovesCalculator.calculateMoves(board, position);
         }
         return null;
     }
@@ -214,6 +214,67 @@ class RookMovesCalculator extends PieceMovesCalculator {
         int[] colDirection = {1, -1, 0, 0};
 
         return DirectionalMovesCalculator.calculateMoves(rowDirection, colDirection, board, position);
+    }
+}
+
+// PieceMovesCalculator subclass for Knight move calculation
+class PawnMovesCalculator extends PieceMovesCalculator {
+    static Collection<ChessMove> calculateMoves(ChessBoard board, ChessPosition position) {
+        // initialize the collection of moves to return
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        ChessPiece piece = board.getPiece(position);
+
+        int row = position.getRow();
+        int col = position.getColumn();
+        int step = 1;
+        // if black, change step to -1
+        if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+            step = -1;
+        }
+        // create end position
+        ChessPosition normalEnd = new ChessPosition(row+step, col);
+
+        // if space in front empty
+        if (board.getPiece(normalEnd) == null) {
+            // if final move
+            if (row + step == 8 || row + step ==1) {
+                validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.QUEEN));
+                validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.BISHOP));
+                validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.KNIGHT));
+                validMoves.add(new ChessMove(position, normalEnd, ChessPiece.PieceType.ROOK));
+            }
+
+            else if (row + step < 8 && row + step > 1) {
+                // if initial move
+                if ((row == 2 && step > 0) || (row == 7 && step < 0)) {
+                    // check space two steps in front
+                    ChessPosition initialEnd = new ChessPosition(row + (2*step), col);
+                    if (board.getPiece(initialEnd) == null) {
+                        validMoves.add(new ChessMove(position, initialEnd, null));
+                    }
+                }
+                // add space in front by default
+                validMoves.add(new ChessMove(position, normalEnd, null));
+            }
+
+        }
+        // check diagonals for attacking
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return validMoves;
     }
 }
 
