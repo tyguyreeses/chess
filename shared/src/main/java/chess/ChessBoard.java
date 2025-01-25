@@ -62,27 +62,15 @@ public class ChessBoard {
         backRow.add(ChessPiece.PieceType.KNIGHT);
         backRow.add(ChessPiece.PieceType.ROOK);
 
-        // add white pieces
+        // sets up the white pieces
         for (int col = 1; col < 9; col++) {
-            ChessPiece piece = new ChessPiece(ChessGame.TeamColor.WHITE, backRow.get(col));
-            ChessPiece pawn = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
-            // adds the back row piece
-            ChessPosition position = new ChessPosition(1,col);
-            addPiece(position, piece);
-            // adds the pawn
-            ChessPosition pawnPos = new ChessPosition(2, col);
-            addPiece(pawnPos, pawn);
+            squares[1][col] = new ChessPiece(ChessGame.TeamColor.WHITE, backRow.get(col));
+            squares[2][col] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
         }
-        // add black pieces
+
         for (int col = 1; col < 9; col++) {
-            ChessPiece piece = new ChessPiece(ChessGame.TeamColor.BLACK, backRow.get(col));
-            ChessPiece pawn = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
-            // adds the back row piece
-            ChessPosition position = new ChessPosition(8,col);
-            addPiece(position, piece);
-            // adds the pawn
-            ChessPosition pawnPos = new ChessPosition(7, col);
-            addPiece(pawnPos, pawn);
+            squares[8][col] = new ChessPiece(ChessGame.TeamColor.BLACK, backRow.get(col));
+            squares[7][col] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
         }
 
     }
