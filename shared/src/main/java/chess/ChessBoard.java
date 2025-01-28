@@ -12,10 +12,29 @@ import java.util.Objects;
  */
 public class ChessBoard {
 
-    private final ChessPiece[][] squares = new ChessPiece[9][9];
+    ChessPiece[][] squares = new ChessPiece[9][9];
 
     public ChessBoard() {
-        
+
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessBoard that = (ChessBoard) o;
+        return Objects.deepEquals(squares, that.squares);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.deepHashCode(squares);
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(squares);
     }
 
     /**
@@ -44,15 +63,16 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        // clear initial empty squares
-        for (int i = 3; i < 6; i++) {
-            for (int j = 0; j < 9; j++) {
-                squares[i][j] = null;
+        // empty initial squares
+        for (int row = 3; row < 7; row++) {
+            for (int col = 1; col<=8; col++) {
+                squares[row][col] = null;
             }
         }
-        // list of back row pieces
+
+        // set up back row piece order
         ArrayList<ChessPiece.PieceType> backRow = new ArrayList<>();
-        backRow.add(ChessPiece.PieceType.ROOK); // filler object
+        backRow.add(ChessPiece.PieceType.ROOK); // filler
         backRow.add(ChessPiece.PieceType.ROOK);
         backRow.add(ChessPiece.PieceType.KNIGHT);
         backRow.add(ChessPiece.PieceType.BISHOP);
@@ -62,30 +82,20 @@ public class ChessBoard {
         backRow.add(ChessPiece.PieceType.KNIGHT);
         backRow.add(ChessPiece.PieceType.ROOK);
 
-        // sets up the white pieces
-        for (int col = 1; col < 9; col++) {
+        // add white pieces
+        for(int col=1; col<=8; col++) {
+            // add back row piece and the pawn
             squares[1][col] = new ChessPiece(ChessGame.TeamColor.WHITE, backRow.get(col));
             squares[2][col] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
         }
 
-        for (int col = 1; col < 9; col++) {
+        // add black pieces
+        for(int col=1; col<=8; col++) {
+            // add back row piece and the pawn
             squares[8][col] = new ChessPiece(ChessGame.TeamColor.BLACK, backRow.get(col));
             squares[7][col] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
         }
 
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ChessBoard that = (ChessBoard) o;
-        return Objects.deepEquals(squares, that.squares);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.deepHashCode(squares);
+        backRow.add(ChessPiece.PieceType.ROOK);
     }
 }
