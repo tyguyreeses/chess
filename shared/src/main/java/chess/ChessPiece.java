@@ -146,72 +146,20 @@ class PawnMovesCalc {
 
 class KingMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        Collection<ChessMove> validMoves = new ArrayList<>();
 
         int[] rowDir = {1,1,1,0,0,-1,-1,-1};
         int[] colDir = {-1,0,1,-1,1,-1,0,1};
 
-        for (int i=0; i<8; i++) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            row += rowDir[i];
-            col += colDir[i];
-
-
-            // catch if it is now off of the board
-            if(!DetermineInBounds.inBounds(row,col)) {
-                continue;
-            }
-
-            ChessPosition endPos = new ChessPosition(row, col);
-
-            // if the space isn't empty
-            if(board.getPiece(endPos) != null) {
-                // if it can attack it
-                if(DetermineCanAttack.canAttack(board, position, endPos)) {
-                    validMoves.add(new ChessMove(position, endPos, null));
-                }
-            }
-            // otherwise, add the move
-            else validMoves.add(new ChessMove(position, endPos, null));
-        }
-        return validMoves;
+        return KKnMovesCalc.calcMoves(rowDir, colDir, board, position);
     }
 }
 
 class KnightMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        Collection<ChessMove> validMoves = new ArrayList<>();
-
         int[] rowDir = {1,1,-1,-1,2,2,-2,-2};
         int[] colDir = {2,-2,2,-2,1,-1,1,-1};
 
-        for (int i=0;i<8;i++) {
-            int row = position.getRow();
-            int col = position.getColumn();
-
-            row += rowDir[i];
-            col += colDir[i];
-
-            // catch if it is now off of the board
-            if(!DetermineInBounds.inBounds(row,col)) {
-                continue;
-            }
-
-            ChessPosition endPos = new ChessPosition(row, col);
-
-            // if the space isn't empty
-            if(board.getPiece(endPos) != null) {
-                // if it can attack it
-                if(DetermineCanAttack.canAttack(board, position, endPos)) {
-                    validMoves.add(new ChessMove(position, endPos, null));
-                }
-            }
-            // otherwise, add the move
-            else validMoves.add(new ChessMove(position, endPos, null));
-        }
-        return validMoves;
+        return KKnMovesCalc.calcMoves(rowDir, colDir, board, position);
     }
 }
 
@@ -287,6 +235,41 @@ class DirectionMovesCalc {
     }
 }
 
+class KKnMovesCalc {
+    static Collection<ChessMove> calcMoves(int[] rowDir, int[] colDir, ChessBoard board, ChessPosition position) {
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        for (int i=0; i<8; i++) {
+            int row = position.getRow();
+            int col = position.getColumn();
+
+            row += rowDir[i];
+            col += colDir[i];
+
+
+            // catch if it is now off of the board
+            if(!DetermineInBounds.inBounds(row,col)) {
+                continue;
+            }
+
+            ChessPosition endPos = new ChessPosition(row, col);
+
+            // if the space isn't empty
+            if(board.getPiece(endPos) != null) {
+                // if it can attack it
+                if(DetermineCanAttack.canAttack(board, position, endPos)) {
+                    validMoves.add(new ChessMove(position, endPos, null));
+                }
+            }
+            // otherwise, add the move
+            else {
+                validMoves.add(new ChessMove(position, endPos, null));
+            }
+        }
+        return validMoves;
+    }
+}
+
 class DetermineCanAttack {
     static boolean canAttack(ChessBoard board, ChessPosition position1, ChessPosition position2) {
         return (board.getPiece(position1).getTeamColor() != board.getPiece(position2).getTeamColor());
@@ -310,7 +293,9 @@ class HandlePawnPromotion {
             validMoves.add(new ChessMove(position1, position2, ChessPiece.PieceType.KNIGHT));
         }
         // otherwise just add the standard move
-        else validMoves.add(new ChessMove(position1, position2, null));
+        else {
+            validMoves.add(new ChessMove(position1, position2, null));
+        }
 
         return validMoves;
     }
