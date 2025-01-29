@@ -146,54 +146,35 @@ class PawnMovesCalc {
 
 class KingMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-
-        int[] rowDir = {1,1,1,0,0,-1,-1,-1};
-        int[] colDir = {-1,0,1,-1,1,-1,0,1};
-
-        return CircularMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return CircularMovesCalc.calcMoves(new int[]{1, 1, 1, 0, 0, -1, -1, -1}, new int[]{-1, 0, 1, -1, 1, -1, 0, 1}, board, position);
     }
 }
 
 class KnightMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        int[] rowDir = {1,1,-1,-1,2,2,-2,-2};
-        int[] colDir = {2,-2,2,-2,1,-1,1,-1};
-
-        return CircularMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return CircularMovesCalc.calcMoves(new int[]{1, 1, -1, -1, 2, 2, -2, -2}, new int[]{2, -2, 2, -2, 1, -1, 1, -1}, board, position);
     }
 }
 
 class QueenMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        int[] rowDir = {1,-1,0,0};
-        int[] colDir = {0,0,-1,1};
-
-        Collection<ChessMove> validMoves = DirectionMovesCalc.calcMoves(rowDir, colDir, board, position);
-
-        int[] diagRowDir = {1,1,-1,-1};
-        int[] diagColDir = {-1,1,-1,1};
-
-        validMoves.addAll(DirectionMovesCalc.calcMoves(diagRowDir, diagColDir, board, position));
-
+        // calculates orthogonal moves
+        Collection<ChessMove> validMoves = DirectionMovesCalc.calcMoves(new int[]{1, -1, 0, 0}, new int[]{0, 0, -1, 1}, board, position);
+        // calculates diagonal moves
+        validMoves.addAll(DirectionMovesCalc.calcMoves(new int[]{1, 1, -1, -1}, new int[]{-1, 1, -1, 1}, board, position));
         return validMoves;
     }
 }
 
 class RookMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        int[] rowDir = {1,-1,0,0};
-        int[] colDir = {0,0,-1,1};
-
-        return DirectionMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return DirectionMovesCalc.calcMoves(new int[]{1, -1, 0, 0}, new int[]{0, 0, -1, 1}, board, position);
     }
 }
 
 class BishopMovesCalc {
     static Collection<ChessMove> calcMoves(ChessBoard board, ChessPosition position) {
-        int[] rowDir = {1,1,-1,-1};
-        int[] colDir = {-1,1,-1,1};
-
-        return DirectionMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return DirectionMovesCalc.calcMoves(new int[]{1, 1, -1, -1}, new int[]{-1, 1, -1, 1}, board, position);
     }
 }
 
