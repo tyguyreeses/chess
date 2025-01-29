@@ -150,7 +150,7 @@ class KingMovesCalc {
         int[] rowDir = {1,1,1,0,0,-1,-1,-1};
         int[] colDir = {-1,0,1,-1,1,-1,0,1};
 
-        return KKnMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return CircularMovesCalc.calcMoves(rowDir, colDir, board, position);
     }
 }
 
@@ -159,7 +159,7 @@ class KnightMovesCalc {
         int[] rowDir = {1,1,-1,-1,2,2,-2,-2};
         int[] colDir = {2,-2,2,-2,1,-1,1,-1};
 
-        return KKnMovesCalc.calcMoves(rowDir, colDir, board, position);
+        return CircularMovesCalc.calcMoves(rowDir, colDir, board, position);
     }
 }
 
@@ -235,7 +235,7 @@ class DirectionMovesCalc {
     }
 }
 
-class KKnMovesCalc {
+class CircularMovesCalc {
     static Collection<ChessMove> calcMoves(int[] rowDir, int[] colDir, ChessBoard board, ChessPosition position) {
         Collection<ChessMove> validMoves = new ArrayList<>();
 
