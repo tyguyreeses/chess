@@ -34,7 +34,22 @@ public class ChessBoard {
 
     @Override
     public String toString() {
-        return Arrays.toString(squares);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < squares.length; i++) {
+            sb.append("|");
+            for (int j = 1; j < squares[i].length; j++) {
+                if (squares[i][j] != null) {
+                    sb.append(squares[i][j]);
+                } else {
+                    sb.append(" ");
+                }
+                if (j < squares[i].length - 1) {
+                    sb.append("|"); // Tab between elements in a row
+                }
+            }
+            sb.append("|\n"); // New line after each row
+        }
+        return sb.toString();
     }
 
     /**
