@@ -60,6 +60,9 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = chessBoard.getPiece(move.getStartPosition());
+        if (piece == null) {
+            throw new InvalidMoveException("No piece to be moved: move= " + move);
+        }
         // if it's the right team's turn
         if (piece.getTeamColor() == getTeamTurn()) {
 
