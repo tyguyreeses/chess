@@ -36,7 +36,16 @@ public class ChessPiece {
 
     @Override
     public String toString() {
-        return (pieceColor + " " + type);
+        // Get the character representation of the piece type
+        char pieceChar = getPieceChar(type);
+
+        if (pieceColor == ChessGame.TeamColor.WHITE) {
+            return String.valueOf(Character.toUpperCase(pieceChar));  // Uppercase for white pieces
+        } else if (pieceColor == ChessGame.TeamColor.BLACK) {
+            return String.valueOf(Character.toLowerCase(pieceChar));  // Lowercase for black pieces
+        }
+        // filler return statement
+        return "";
     }
 
     /**
@@ -49,6 +58,18 @@ public class ChessPiece {
         KNIGHT,
         ROOK,
         PAWN
+    }
+
+    private char getPieceChar(PieceType t) {
+        return switch (t) {
+            case KING -> 'K';
+            case QUEEN -> 'Q';
+            case BISHOP -> 'B';
+            case KNIGHT -> 'N';
+            case ROOK -> 'R';
+            case PAWN -> 'P';
+            default -> throw new IllegalArgumentException("Unknown piece type: " + t);
+        };
     }
 
     /**
