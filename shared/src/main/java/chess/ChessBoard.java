@@ -35,7 +35,7 @@ public class ChessBoard {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i < squares.length; i++) {
+        for (int i = 8; i > 0; i--) {
             sb.append("|");
             for (int j = 1; j < squares[i].length; j++) {
                 if (squares[i][j] != null) {
