@@ -11,7 +11,7 @@ import java.util.Collection;
 public class ChessGame {
 
     private TeamColor turn = TeamColor.WHITE;
-    ChessBoard chessBoard = new ChessBoard();
+    private final ChessBoard chessBoard = new ChessBoard();
 
     public ChessGame() {
 
@@ -60,10 +60,32 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = chessBoard.getPiece(move.getStartPosition());
-        // remove the piece from starting position
-        chessBoard.addPiece(move.getStartPosition(), null);
-        // add the piece to the end position
-        chessBoard.addPiece(move.getEndPosition(), piece);
+        // if it's the right team's turn
+        if (piece.getTeamColor() == getTeamTurn()) {
+
+            // If the piece is a king, do stuff with check
+
+            // Otherwise just return the regular list of valid moves
+            Collection<ChessMove> moves = validMoves(move.getStartPosition());
+            // check if it's a valid move
+            if (moves.contains(move)) {
+                // add the piece to the end position
+                chessBoard.addPiece(move.getEndPosition(), chessBoard.getPiece(move.getStartPosition()));
+                // remove the piece from starting position
+                chessBoard.addPiece(move.getStartPosition(), null);
+            }
+            // otherwise throw an error
+            else {
+                throw new InvalidMoveException("Invalid move: move= " + move + ", validMoves: " + moves);
+            }
+            // update team turn
+            setTeamTurn(getTeamTurn() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE );
+            // check for checkmate and stalemate after the move
+        }
+        // otherwise throw an error
+        else {
+            throw new InvalidMoveException("Wrong turn: turn= " + getTeamTurn() + ", move= " + move);
+        }
     }
 
     /**
