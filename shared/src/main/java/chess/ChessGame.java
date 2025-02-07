@@ -14,7 +14,7 @@ public class ChessGame {
     private final ChessBoard chessBoard = new ChessBoard();
 
     public ChessGame() {
-
+        chessBoard.resetBoard();
     }
 
     /**
@@ -110,7 +110,11 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // first check if king in check
+        if (isInCheck(teamColor)) {
+
+        }
+        return false;
     }
 
     /**
@@ -121,7 +125,30 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        if (getTeamTurn() == teamColor) {
+            ChessPosition kingPos = teamColor == TeamColor.WHITE ? chessBoard.whiteKingPos : chessBoard.blackKingPos;
+            // first check if not in check and the king has no moves
+            if (!isInCheck(teamColor) && validMoves(kingPos).isEmpty()) {
+                if (validMoves(kingPos).isEmpty()) {
+                    // then check if any other pieces have moves
+                    for (int row = 1; row < 9; row++) {
+                        for (int col = 1; col < 9; col++) {
+                            ChessPosition pos = new ChessPosition(row, col);
+                            ChessPiece piece = chessBoard.getPiece(pos);
+                            // if piece exists, is same color, and isn't the king
+                            if (piece != null && piece.getTeamColor() == teamColor && piece.getPieceType() != ChessPiece.PieceType.KING) {
+                                // if it has possible moves you're not in stalemate
+                                if (!validMoves(pos).isEmpty()) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -182,7 +209,6 @@ public class ChessGame {
             }
         }
         return cloneBoard.isInCheck(teamColor);
-
     }
 }
 
