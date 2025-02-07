@@ -10,12 +10,13 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessBoard {
+public class ChessBoard implements Cloneable{
 
     ChessPiece[][] squares = new ChessPiece[9][9];
+    ChessPosition whiteKingPos = null;
+    ChessPosition blackKingPos = null;
 
     public ChessBoard() {
-
     }
 
     @Override
@@ -103,6 +104,7 @@ public class ChessBoard {
             squares[1][col] = new ChessPiece(ChessGame.TeamColor.WHITE, backRow.get(col));
             squares[2][col] = new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN);
         }
+        whiteKingPos = new ChessPosition(1, 5);
 
         // add black pieces
         for(int col=1; col<=8; col++) {
@@ -110,7 +112,22 @@ public class ChessBoard {
             squares[8][col] = new ChessPiece(ChessGame.TeamColor.BLACK, backRow.get(col));
             squares[7][col] = new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN);
         }
+        blackKingPos = new ChessPosition(8, 5);
 
         backRow.add(ChessPiece.PieceType.ROOK);
+    }
+
+    @Override
+    public ChessBoard clone() {
+        try {
+            ChessBoard clone = (ChessBoard) super.clone();
+
+            ChessPiece[][] cloneSquares = new ChessPiece[9][9];
+
+
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

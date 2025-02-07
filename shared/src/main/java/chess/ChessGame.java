@@ -67,6 +67,19 @@ public class ChessGame {
         if (piece.getTeamColor() == getTeamTurn()) {
 
             // If the piece is a king, do stuff with check
+            if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                if (piece.getTeamColor() == TeamColor.WHITE) {
+
+                    // determine if it's a valid move for the King with check, stalemate, and check
+
+                    chessBoard.whiteKingPos = move.getEndPosition();
+                } else {
+
+                    // determine if it's a valid move for the King
+
+                    chessBoard.blackKingPos = move.getEndPosition();
+                }
+            }
 
             // Otherwise just return the regular list of valid moves
             Collection<ChessMove> moves = validMoves(move.getStartPosition());
@@ -98,7 +111,27 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        // store king position
+        ChessPosition kingPos = teamColor == TeamColor.WHITE ? chessBoard.whiteKingPos : chessBoard.blackKingPos;
+
+        // iterate over whole board
+        for (int row = 1; row < 9; row++) {
+            for (int col = 1; col < 9; col++) {
+                ChessPosition pos = new ChessPosition(row, col);
+                // if there is a piece
+                if (chessBoard.getPiece(pos) != null) {
+                    // calculate valid moves
+                    Collection<ChessMove> moves = validMoves(pos);
+                    // check if a piece is threatening the king
+                    for (ChessMove move : moves) {
+                        if (move.getEndPosition() == kingPos) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -137,6 +170,14 @@ public class ChessGame {
                 if (board.getPiece(pos) != null) {
                     ChessPiece piece = board.getPiece(pos);
                     chessBoard.addPiece(pos, piece);
+                    // update king location if it's a king
+                    if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                        if (piece.getTeamColor() == TeamColor.WHITE) {
+                            board.whiteKingPos = pos;
+                        } else {
+                            board.blackKingPos = pos;
+                        }
+                    }
                 } else {
                     chessBoard.addPiece(pos, null);
                 }
