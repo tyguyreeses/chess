@@ -100,10 +100,11 @@ public class ChessBoard implements Cloneable{
         for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
                 ChessPosition pos = new ChessPosition(row, col);
+                ChessPiece piece = getPiece(pos);
                 // if there is a piece
-                if (getPiece(pos) != null) {
+                if (piece != null && piece.getTeamColor() != teamColor) {
                     // calculate valid moves
-                    Collection<ChessMove> moves = getPiece(pos).pieceMoves(this, pos);
+                    Collection<ChessMove> moves = piece.pieceMoves(this, pos);
                     // check if a piece is threatening the king
                     for (ChessMove move : moves) {
                         if (move.getEndPosition().getRow() == kingPos.getRow() && move.getEndPosition().getColumn() == kingPos.getColumn()) {
