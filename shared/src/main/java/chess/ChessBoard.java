@@ -122,8 +122,22 @@ public class ChessBoard implements Cloneable{
         try {
             ChessBoard clone = (ChessBoard) super.clone();
 
+            // make deepCopy of squares
             ChessPiece[][] cloneSquares = new ChessPiece[9][9];
+            for (int row = 1; row <= 8; row++) {
+                for (int col = 1; col<=8; col++) {
+                    ChessPiece ogPiece = squares[row][col];
+                    cloneSquares[row][col] = (ogPiece != null) ? ogPiece.clone() : null;
+                }
+            }
+            clone.squares = cloneSquares;
 
+            // make deep copy of king positions
+            ChessPosition cloneWKP = new ChessPosition(whiteKingPos.getRow(), whiteKingPos.getColumn());
+            ChessPosition cloneBKP = new ChessPosition(blackKingPos.getRow(), blackKingPos.getColumn());
+            // update clone king positions
+            clone.whiteKingPos = cloneWKP;
+            clone.blackKingPos = cloneBKP;
 
             return clone;
         } catch (CloneNotSupportedException e) {
