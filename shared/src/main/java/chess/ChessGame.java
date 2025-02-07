@@ -55,7 +55,7 @@ public class ChessGame {
         }
         Collection<ChessMove> movesToTest = piece.pieceMoves(chessBoard, startPosition);
         // check each move if it moves
-        movesToTest.removeIf(move -> TestIntoCheck(chessBoard, move, piece.getTeamColor()));
+        movesToTest.removeIf(move -> testIntoCheck(move, piece.getTeamColor()));
         return movesToTest;
     }
 
@@ -112,7 +112,23 @@ public class ChessGame {
     public boolean isInCheckmate(TeamColor teamColor) {
         // first check if king in check
         if (isInCheck(teamColor)) {
-
+            // if it is, try moving every piece all their moves until the king is out of check
+            for (int row=0; row<9; row++) {
+                for (int col=0; col<9; col++) {
+                    ChessPosition pos = new ChessPosition(row, col);
+                    ChessPiece piece = chessBoard.getPiece(pos);
+                    if (piece != null && piece.getTeamColor() == teamColor) {
+                        for (ChessMove move : validMoves(pos)) {
+                            // if it can move so that the king isn't in check, return true
+                            if (!testIntoCheck(move, teamColor)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            // otherwise there is no way to escape checkmate
+            return true;
         }
         return false;
     }
@@ -190,9 +206,9 @@ public class ChessGame {
         return chessBoard;
     }
 
-    public boolean TestIntoCheck(ChessBoard board, ChessMove move, ChessGame.TeamColor teamColor) {
+    public boolean testIntoCheck(ChessMove move, ChessGame.TeamColor teamColor) {
         // copy the chessboard and move the piece
-        ChessBoard cloneBoard = board.clone();
+        ChessBoard cloneBoard = chessBoard.clone();
 
         ChessPosition startPos = move.getStartPosition();
         ChessPosition endPos = move.getEndPosition();
