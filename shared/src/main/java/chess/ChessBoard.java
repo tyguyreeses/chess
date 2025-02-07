@@ -2,6 +2,7 @@ package chess;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -74,6 +75,38 @@ public class ChessBoard implements Cloneable{
         return squares[position.getRow()][position.getColumn()];
     }
 
+    public void movePiece(ChessMove move) {
+        ChessPosition startPos = move.getStartPosition();
+        // add the piece to the end position
+        this.addPiece(move.getEndPosition(), getPiece(startPos));
+        // remove the piece from starting position
+        this.addPiece(startPos, null);
+    }
+
+    public boolean isInCheck(ChessGame.TeamColor teamColor) {
+        // store king position
+        ChessPosition kingPos = teamColor == ChessGame.TeamColor.WHITE ? whiteKingPos : blackKingPos;
+
+        // iterate over whole board
+        for (int row = 1; row < 9; row++) {
+            for (int col = 1; col < 9; col++) {
+                ChessPosition pos = new ChessPosition(row, col);
+                // if there is a piece
+                if (getPiece(pos) != null) {
+                    // calculate valid moves
+                    Collection<ChessMove> moves = getPiece(pos).pieceMoves(this, pos);
+                    // check if a piece is threatening the king
+                    for (ChessMove move : moves) {
+                        if (move.getEndPosition().getRow() == kingPos.getRow() && move.getEndPosition().getColumn() == kingPos.getColumn()) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
@@ -133,8 +166,8 @@ public class ChessBoard implements Cloneable{
             clone.squares = cloneSquares;
 
             // make deep copy of king positions
-            ChessPosition cloneWKP = new ChessPosition(whiteKingPos.getRow(), whiteKingPos.getColumn());
-            ChessPosition cloneBKP = new ChessPosition(blackKingPos.getRow(), blackKingPos.getColumn());
+            ChessPosition cloneWKP = whiteKingPos != null ? new ChessPosition(whiteKingPos.getRow(), whiteKingPos.getColumn()) : null;
+            ChessPosition cloneBKP = blackKingPos != null ? new ChessPosition(blackKingPos.getRow(), blackKingPos.getColumn()) : null;
             // update clone king positions
             clone.whiteKingPos = cloneWKP;
             clone.blackKingPos = cloneBKP;
