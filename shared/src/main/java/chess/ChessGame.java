@@ -49,7 +49,14 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        return chessBoard.getPiece(startPosition).pieceMoves(chessBoard, startPosition);
+        ChessPiece piece = chessBoard.getPiece(startPosition);
+        if (piece == null) {
+            return null;
+        }
+        Collection<ChessMove> movesToTest = piece.pieceMoves(chessBoard, startPosition);
+        // check each move if it moves
+        movesToTest.removeIf(move -> TestIntoCheck(chessBoard, move, piece.getTeamColor()));
+        return movesToTest;
     }
 
     /**
@@ -66,29 +73,12 @@ public class ChessGame {
         // if it's the right team's turn
         if (piece.getTeamColor() == getTeamTurn()) {
 
-            // If the piece is a king, do stuff with check
-            if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-                if (piece.getTeamColor() == TeamColor.WHITE) {
-
-                    // determine if it's a valid move for the King with check, stalemate, and check
-
-                    chessBoard.whiteKingPos = move.getEndPosition();
-                } else {
-
-                    // determine if it's a valid move for the King
-
-                    chessBoard.blackKingPos = move.getEndPosition();
-                }
-            }
-
             // Otherwise just return the regular list of valid moves
             Collection<ChessMove> moves = validMoves(move.getStartPosition());
             // check if it's a valid move
             if (moves.contains(move)) {
-                // add the piece to the end position
-                chessBoard.addPiece(move.getEndPosition(), chessBoard.getPiece(move.getStartPosition()));
-                // remove the piece from starting position
-                chessBoard.addPiece(move.getStartPosition(), null);
+                // make the move
+                chessBoard.movePiece(move);
             }
             // otherwise throw an error
             else {
@@ -96,7 +86,6 @@ public class ChessGame {
             }
             // update team turn
             setTeamTurn(getTeamTurn() == TeamColor.WHITE ? TeamColor.BLACK : TeamColor.WHITE );
-            // check for checkmate and stalemate after the move
         }
         // otherwise throw an error
         else {
@@ -111,27 +100,7 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        // store king position
-        ChessPosition kingPos = teamColor == TeamColor.WHITE ? chessBoard.whiteKingPos : chessBoard.blackKingPos;
-
-        // iterate over whole board
-        for (int row = 1; row < 9; row++) {
-            for (int col = 1; col < 9; col++) {
-                ChessPosition pos = new ChessPosition(row, col);
-                // if there is a piece
-                if (chessBoard.getPiece(pos) != null) {
-                    // calculate valid moves
-                    Collection<ChessMove> moves = validMoves(pos);
-                    // check if a piece is threatening the king
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition() == kingPos) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return chessBoard.isInCheck(teamColor);
     }
 
     /**
@@ -173,9 +142,9 @@ public class ChessGame {
                     // update king location if it's a king
                     if (piece.getPieceType() == ChessPiece.PieceType.KING) {
                         if (piece.getTeamColor() == TeamColor.WHITE) {
-                            board.whiteKingPos = pos;
+                            chessBoard.whiteKingPos = pos;
                         } else {
-                            board.blackKingPos = pos;
+                            chessBoard.blackKingPos = pos;
                         }
                     }
                 } else {
@@ -193,4 +162,28 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return chessBoard;
     }
+
+    public boolean TestIntoCheck(ChessBoard board, ChessMove move, ChessGame.TeamColor teamColor) {
+        // copy the chessboard and move the piece
+        ChessBoard cloneBoard = board.clone();
+
+        ChessPosition startPos = move.getStartPosition();
+        ChessPosition endPos = move.getEndPosition();
+        ChessPiece piece = cloneBoard.getPiece(startPos);
+
+        cloneBoard.movePiece(move);
+
+        // update king position if king was moved
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+                cloneBoard.whiteKingPos = endPos;
+            } else {
+                cloneBoard.blackKingPos = endPos;
+            }
+        }
+        return cloneBoard.isInCheck(teamColor);
+
+    }
 }
+
+
