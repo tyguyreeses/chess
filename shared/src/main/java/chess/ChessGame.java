@@ -177,23 +177,27 @@ public class ChessGame {
         for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
                 // create a ChessPosition object
-                ChessPosition pos = new ChessPosition(row, col);
-                // if there is a piece
-                if (board.getPiece(pos) != null) {
-                    ChessPiece piece = board.getPiece(pos);
-                    chessBoard.addPiece(pos, piece);
-                    // update king location if it's a king
-                    if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-                        if (piece.getTeamColor() == TeamColor.WHITE) {
-                            chessBoard.whiteKingPos = pos;
-                        } else {
-                            chessBoard.blackKingPos = pos;
-                        }
-                    }
+                setBoardHelper(board, row, col);
+            }
+        }
+    }
+
+    private void setBoardHelper(ChessBoard board, int row, int col) {
+        ChessPosition pos = new ChessPosition(row, col);
+        // if there is a piece
+        if (board.getPiece(pos) != null) {
+            ChessPiece piece = board.getPiece(pos);
+            chessBoard.addPiece(pos, piece);
+            // update king location if it's a king
+            if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                if (piece.getTeamColor() == TeamColor.WHITE) {
+                    chessBoard.whiteKingPos = pos;
                 } else {
-                    chessBoard.addPiece(pos, null);
+                    chessBoard.blackKingPos = pos;
                 }
             }
+        } else {
+            chessBoard.addPiece(pos, null);
         }
     }
 
