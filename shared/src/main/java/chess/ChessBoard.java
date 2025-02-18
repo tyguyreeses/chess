@@ -99,18 +99,25 @@ public class ChessBoard implements Cloneable{
         // iterate over whole board
         for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
-                ChessPosition pos = new ChessPosition(row, col);
-                ChessPiece piece = getPiece(pos);
-                // if there is a piece
-                if (piece != null && piece.getTeamColor() != teamColor) {
-                    // calculate valid moves
-                    Collection<ChessMove> moves = piece.pieceMoves(this, pos);
-                    // check if a piece is threatening the king
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().getRow() == kingPos.getRow() && move.getEndPosition().getColumn() == kingPos.getColumn()) {
-                            return true;
-                        }
-                    }
+                if (isInCheckHelper(row, col, teamColor, kingPos)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isInCheckHelper(int row, int col, ChessGame.TeamColor teamColor, ChessPosition kingPos) {
+        ChessPosition pos = new ChessPosition(row, col);
+        ChessPiece piece = getPiece(pos);
+        // if there is a piece
+        if (piece != null && piece.getTeamColor() != teamColor) {
+            // calculate valid moves
+            Collection<ChessMove> moves = piece.pieceMoves(this, pos);
+            // check if a piece is threatening the king
+            for (ChessMove move : moves) {
+                if (move.getEndPosition().getRow() == kingPos.getRow() && move.getEndPosition().getColumn() == kingPos.getColumn()) {
+                    return true;
                 }
             }
         }
