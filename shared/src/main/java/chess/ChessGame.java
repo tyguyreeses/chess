@@ -127,6 +127,7 @@ public class ChessGame {
         return false;
     }
 
+    // Determines if a piece can move so that the king is not in check
     private boolean canMoveOutOfCheck(TeamColor teamColor, int row, int col) {
         // checks if a piece can move so that the king isn't in check
         ChessPosition pos = new ChessPosition(row, col);
@@ -159,6 +160,7 @@ public class ChessGame {
         return false;
     }
 
+    // Determines if any piece has moves
     public boolean doPiecesHaveMoves(TeamColor teamColor) {
         for (int row = 1; row < 9; row++) {
             for (int col = 1; col < 9; col++) {
