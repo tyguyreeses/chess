@@ -112,25 +112,30 @@ public class ChessGame {
     public boolean isInCheckmate(TeamColor teamColor) {
         // first check if king in check
         if (isInCheck(teamColor)) {
-            // if it can move out of check, not in checkmate
-            return !canMoveOutOfCheck(teamColor);
+            // check if any piece can move so the king isn't in check
+            for (int row=0; row<9; row++) {
+                for (int col = 0; col < 9; col++) {
+                    // if that piece can move out of check, not in checkmate
+                    if (canMoveOutOfCheck(teamColor, row, col)) {
+                        return false;
+                    }
+                }
+            }
+            // if no piece can move so that the king isn't in check, you're in checkmate
+            return true;
         }
         return false;
     }
 
-    private boolean canMoveOutOfCheck(TeamColor teamColor) {
-        // checks if any piece can move so that the king isn't in check
-        for (int row=0; row<9; row++) {
-            for (int col=0; col<9; col++) {
-                ChessPosition pos = new ChessPosition(row, col);
-                ChessPiece piece = chessBoard.getPiece(pos);
-                if (piece != null && piece.getTeamColor() == teamColor) {
-                    for (ChessMove move : validMoves(pos)) {
-                        // if it can move so that the king isn't in check, return true
-                        if (!testIntoCheck(move, teamColor)) {
-                            return true;
-                        }
-                    }
+    private boolean canMoveOutOfCheck(TeamColor teamColor, int row, int col) {
+        // checks if a piece can move so that the king isn't in check
+        ChessPosition pos = new ChessPosition(row, col);
+        ChessPiece piece = chessBoard.getPiece(pos);
+        if (piece != null && piece.getTeamColor() == teamColor) {
+            for (ChessMove move : validMoves(pos)) {
+                // if it can move so that the king isn't in check, return true
+                if (!testIntoCheck(move, teamColor)) {
+                    return true;
                 }
             }
         }
