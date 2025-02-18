@@ -141,29 +141,30 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        if (getTeamTurn() == teamColor) {
-            ChessPosition kingPos = teamColor == TeamColor.WHITE ? chessBoard.whiteKingPos : chessBoard.blackKingPos;
-            // first check if not in check and the king has no moves
-            if (!isInCheck(teamColor) && validMoves(kingPos).isEmpty()) {
-                if (validMoves(kingPos).isEmpty()) {
-                    // then check if any other pieces have moves
-                    for (int row = 1; row < 9; row++) {
-                        for (int col = 1; col < 9; col++) {
-                            ChessPosition pos = new ChessPosition(row, col);
-                            ChessPiece piece = chessBoard.getPiece(pos);
-                            // if piece exists, is same color, and isn't the king
-                            if (piece != null && piece.getTeamColor() == teamColor && piece.getPieceType() != ChessPiece.PieceType.KING) {
-                                // if it has possible moves you're not in stalemate
-                                if (!validMoves(pos).isEmpty()) {
-                                    return false;
-                                }
-                            }
-                        }
+        ChessPosition kingPos = teamColor == TeamColor.WHITE ? chessBoard.whiteKingPos : chessBoard.blackKingPos;
+        // check if current turn, if not in checkmate, and if the king can't move
+        if (getTeamTurn() == teamColor && !isInCheck(teamColor) && validMoves(kingPos).isEmpty()) {
+            // if any pieces of that team have moves, you're not in stalemate
+            return !doPiecesHaveMoves(teamColor);
+        }
+        return false;
+    }
+
+    public boolean doPiecesHaveMoves(TeamColor teamColor) {
+        for (int row = 1; row < 9; row++) {
+            for (int col = 1; col < 9; col++) {
+                ChessPosition pos = new ChessPosition(row, col);
+                ChessPiece piece = chessBoard.getPiece(pos);
+                // if piece exists, is same color, and isn't the king
+                if (piece != null && piece.getTeamColor() == teamColor && piece.getPieceType() != ChessPiece.PieceType.KING) {
+                    // if it has possible moves return true
+                    if (!validMoves(pos).isEmpty()) {
+                        return true;
                     }
-                    return true;
                 }
             }
         }
+        // if no pieces have moves return false
         return false;
     }
 
