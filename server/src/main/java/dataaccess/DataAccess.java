@@ -70,10 +70,7 @@ public class DataAccess {
     /**
      * finds game by gameID
      */
-    public GameData getGame(int gameID) throws DataAccessException{
-        if (games.get(gameID) == null) {
-            throw new DataAccessException("Error: gameID doesn't exist in the database");
-        }
+    public GameData getGame(int gameID) {
         return games.get(gameID);
     }
 
@@ -87,7 +84,11 @@ public class DataAccess {
     /**
      * replaces gameData by gameID
      */
-    public void updateGame(int gameID, GameData gameData) {
+    public void updateGame(GameData gameData) throws DataAccessException {
+        int gameID = gameData.gameID();
+        if (getGame(gameID) == null) {
+            throw new DataAccessException("Error: gameID doesn't exist in the database");
+        }
         games.replace(gameID, gameData);
     }
 
