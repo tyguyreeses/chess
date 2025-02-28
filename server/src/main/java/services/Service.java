@@ -2,9 +2,8 @@ package services;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import model.AuthData;
-import model.UserData;
-
+import model.*;
+import java.util.Map;
 import java.util.Objects;
 
 public class Service {
@@ -73,19 +72,50 @@ public class Service {
         }
     }
 
-    // Inner class to represent response data
-    public record Response(int status, String message, String username, String authToken) {
+    public Response listGames(String authToken) {
+        try {
+            AuthData authData = dataAccess.getAuth(authToken);
+            if (authData != null) {
+                return new Response(200, dataAccess.getGames());
+            } else {
+                return new Response(401, "Error: unauthorized");
+            }
+        } catch (Exception e) {
+            return new Response(500, "Error: " + e.getMessage());
+        }
+    }
+
+    public Response createGame(String authToken, String gameName) {
+        try {
+            AuthData authData = dataAccess.getAuth(authToken);
+            if (authData != null) {
+                dataAccess.createGame(authData.username(), gameName);
+                return new Response(200, dataAccess.getGames());
+            } else {
+                return new Response(401, "Error: unauthorized");
+            }
+        } catch (Exception e) {
+            return new Response(500, "Error: " + e.getMessage());
+        }
+    }
+
+    // inner class to represent response data
+    public record Response(int status, String message, String username, String authToken, Map<Integer, GameData> games) {
         // Convenience constructors for different response types
         public Response(int status) {
-            this(status, null, null, null);
+            this(status,null,null,null, null);
         }
 
         public Response(int status, String message) {
-            this(status, message, null, null);
+            this(status, message,null,null,null);
         }
 
         public Response(int status, String username, String authToken) {
-            this(status, null, username, authToken);
+            this(status,null, username, authToken,null);
+        }
+
+        public Response(int status, Map<Integer, GameData> games) {
+            this(status,null,null,null, games);
         }
     }
 }
