@@ -21,7 +21,7 @@ public class DataAccessTests {
     @AfterEach
     public void tearDown() {
         // clean up any state after each test
-        dataAccess.clear();
+        dataAccess.clearData();
     }
 
     @Test
@@ -135,7 +135,7 @@ public class DataAccessTests {
         UserData user = new UserData("user1", "password123", "hi@gmail.com");
         try {
             dataAccess.createUser(user);
-            dataAccess.clear(); // Clear the data
+            dataAccess.clearData(); // Clear the data
             assertNull(dataAccess.getUser("user1")); // verify user is cleared
         } catch (DataAccessException e) {
             fail("DataAccessException should not be thrown");
