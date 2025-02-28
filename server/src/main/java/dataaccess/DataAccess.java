@@ -12,7 +12,7 @@ public class DataAccess {
     /**
      * resets all stored data
      */
-    public void clear() {
+    public void clearData() {
         users.clear();
         authTokens.clear();
         games.clear();
