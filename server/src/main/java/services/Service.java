@@ -89,8 +89,8 @@ public class Service {
         try {
             AuthData authData = dataAccess.getAuth(authToken);
             if (authData != null) {
-                dataAccess.createGame(authData.username(), gameName);
-                return new Response(200, dataAccess.getGames());
+                int gameID = dataAccess.createGame(authData.username(), gameName);
+                return new Response(200, gameID);
             } else {
                 return new Response(401, "Error: unauthorized");
             }
@@ -100,22 +100,27 @@ public class Service {
     }
 
     // inner class to represent response data
-    public record Response(int status, String message, String username, String authToken, Map<Integer, GameData> games) {
+    public record Response(int status, String message, String username, String authToken, int gameID, Map<Integer, GameData> games) {
         // Convenience constructors for different response types
         public Response(int status) {
-            this(status,null,null,null, null);
+            this(status,null,null,null, -1,null);
         }
 
         public Response(int status, String message) {
-            this(status, message,null,null,null);
+            this(status, message,null,null,-1,null);
         }
 
         public Response(int status, String username, String authToken) {
-            this(status,null, username, authToken,null);
+            this(status,null, username, authToken,-1,null);
         }
 
         public Response(int status, Map<Integer, GameData> games) {
-            this(status,null,null,null, games);
+            this(status,null,null,null,-1, games);
+        }
+
+        public Response(int status, int gameID) {
+            this(status,null,null,null, gameID, null);
+
         }
     }
 }

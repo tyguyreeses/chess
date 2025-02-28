@@ -7,9 +7,8 @@ import model.*;
 
 public class DataAccess {
     private final Map<String, UserData> users = new HashMap<>(); // simulates a database with username: UserData
-    private final Map<String, AuthData> authTokens = new HashMap<>(); // simulates database with authToken: AuthData
+    public final Map<String, AuthData> authTokens = new HashMap<>(); // simulates database with authToken: AuthData
     private final Map<Integer, GameData> games = new HashMap<>(); // simulates database with gameID: GameData
-
 
     /**
      * resets all stored data
@@ -58,12 +57,12 @@ public class DataAccess {
         authTokens.remove(authToken);
     }
 
-    /**
-     * creates a new game given a username and a password, creating an ID using a PriorityQueue
-     */
     private int nextId = 1;
     private final Queue<Integer> availableIds = new PriorityQueue<>();
 
+    /**
+     * creates a new game given a username and a password, creating an ID using a PriorityQueue
+     */
     public int createGame(String username, String gameName) {
         int gameID;
         if (!availableIds.isEmpty()) {

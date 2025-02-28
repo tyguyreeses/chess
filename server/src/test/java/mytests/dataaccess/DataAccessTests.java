@@ -15,6 +15,7 @@ public class DataAccessTests {
     public void setUp() {
         // set up the initial state for each test
         dataAccess = new DataAccess();
+        dataAccess.authTokens.put("test", new AuthData("test","test"));
     }
 
     // this runs after each test method

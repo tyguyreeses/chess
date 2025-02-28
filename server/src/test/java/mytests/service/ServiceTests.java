@@ -2,10 +2,13 @@ package mytests.service;
 
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import services.Service;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,9 +18,9 @@ public class ServiceTests {
     @BeforeEach
     public void setUp() {
         service = new Service();
-
         // reset database
         service.clearData();
+        service.dataAccess.authTokens.put("test", new AuthData("test","test"));
     }
 
     @Test
@@ -158,6 +161,75 @@ public class ServiceTests {
         Service.Response response = service.logoutUser("invalidToken");
 
         assertEquals(401, response.status());
+        assertEquals("Error: unauthorized", response.message());
+    }
+
+    @Test
+    public void testListGames_Success() throws DataAccessException {
+        // Create a user and authenticate them
+        String authToken = "test"; // You'd want to make sure this token is valid in your test setup
+
+        // Create a game to ensure there's at least one game in the list
+        service.dataAccess.createGame("player1", "Game1");
+
+        // Call the listGames method and check for success response
+        Service.Response response = service.listGames(authToken);
+
+        // Assert that the status code is 200 (OK)
+        assertEquals(200, response.status());
+
+        // Assert that the response contains the correct list of games
+        assertNotNull(response.games());  // Assuming the data contains a list of games
+        assertFalse(response.games().isEmpty()); // Ensure at least one game is in the list
+    }
+
+    @Test
+    public void testListGames_Unauthorized() {
+        // Provide an invalid auth token
+        String invalidAuthToken = "invalidAuthToken";
+
+        // Call the listGames method with invalid auth token
+        Service.Response response = service.listGames(invalidAuthToken);
+
+        // Assert that the status code is 401 (Unauthorized)
+        assertEquals(401, response.status());
+
+        // Assert that the response contains the expected error message
+        assertEquals("Error: unauthorized", response.message());
+    }
+
+    @Test
+    public void testCreateGame_Success() throws DataAccessException {
+        // Create a user and authenticate them
+        String authToken = "test";
+
+        // Call the createGame method to create a new game
+        Service.Response createResponse = service.createGame(authToken, "NewGame");
+
+        // Assert that the status code is 200 (OK)
+        assertEquals(200, createResponse.status());
+
+        // Check that the response data contains a non-default ID
+        int gameID = createResponse.gameID();
+        assertTrue(gameID != -1);
+
+        // Verify the new game was created
+        Service.Response listResponse = service.listGames(authToken);
+        assertNotNull(listResponse.games().get(gameID)); // Ensure the game now exists
+    }
+
+    @Test
+    public void testCreateGame_Unauthorized() {
+        // Provide an invalid auth token
+        String invalidAuthToken = "invalidAuthToken";
+
+        // Call the createGame method with invalid auth token
+        Service.Response response = service.createGame(invalidAuthToken, "NewGame");
+
+        // Assert that the status code is 401 (Unauthorized)
+        assertEquals(401, response.status());
+
+        // Assert that the response contains the expected error message
         assertEquals("Error: unauthorized", response.message());
     }
 }
