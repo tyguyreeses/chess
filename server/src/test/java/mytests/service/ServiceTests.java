@@ -1,9 +1,9 @@
-package java.handler;
+package mytests.service;
 
 import org.junit.jupiter.api.*;  // Import JUnit 5 annotations
 import static org.junit.jupiter.api.Assertions.*;  // Import assertion methods
 
-public class HandlerTests {
+public class ServiceTests {
 
     // This runs before each test method
     @BeforeEach
