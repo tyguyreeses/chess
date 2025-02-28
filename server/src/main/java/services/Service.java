@@ -69,7 +69,7 @@ public class Service {
                 return new Response(401, "Error: unauthorized");
             }
         } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());;
+            return new Response(500, "Error: " + e.getMessage());
         }
     }
 
