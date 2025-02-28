@@ -1,6 +1,8 @@
 package dataaccess;
 import java.util.*;
 
+
+import chess.ChessGame;
 import model.*;
 
 public class DataAccess {
@@ -57,14 +59,20 @@ public class DataAccess {
     }
 
     /**
-     * creates a new game by GameData if gameID isn't already in the database
+     * creates a new game given a username and a password, creating an ID using a PriorityQueue
      */
-    public int createGame(GameData gameData) throws DataAccessException{
-        if (getGame(gameData.gameID()) != null) {
-            throw new DataAccessException("Error: gameID already exists in the database");
+    private int nextId = 1;
+    private final Queue<Integer> availableIds = new PriorityQueue<>();
+
+    public int createGame(String username, String gameName) {
+        int gameID;
+        if (!availableIds.isEmpty()) {
+            gameID = availableIds.poll();  // Reuse an ID if available
+        } else {
+            gameID = nextId++;
         }
-        games.put(gameData.gameID(), gameData);
-        return gameData.gameID();
+        games.put(gameID, new GameData(gameID, username, null, gameName, new ChessGame()));
+        return gameID;
     }
 
     /**

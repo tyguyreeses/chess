@@ -85,35 +85,46 @@ public class DataAccessTests {
     // test createGame and getGame methods
     @Test
     public void testCreateGame_Success() throws DataAccessException {
+        // Test the creation of a game and the auto-generated gameID
         ChessGame game = new ChessGame();
-        GameData gameData = new GameData(1, "player1", "player2","name", game);
-        int gameID = dataAccess.createGame(gameData);
+        GameData gameData = new GameData(1, "player1", null, "name", game);
+
+        // Create the game and capture the returned gameID
+        int gameID = dataAccess.createGame("player1", "name");
+
+        // Validate the gameID is valid and the game was created successfully
         assertEquals(gameData.gameID(), gameID);
         assertEquals(gameData, dataAccess.getGame(gameID));
     }
 
     @Test
-    public void testCreateGame_GameAlreadyExists() {
-        ChessGame game = new ChessGame();
-        GameData gameData = new GameData(1, "player1", "player2", "name", game);
-        try {
-            dataAccess.createGame(gameData);
-            dataAccess.createGame(gameData); // Try to create the same game again
-            fail("Expected DataAccessException to be thrown");
-        } catch (DataAccessException e) {
-            assertEquals("Error: gameID already exists in the database", e.getMessage());
-        }
+    public void testCreateGame_NewGameID() throws DataAccessException {
+        // Test that new game IDs are generated sequentially
+        ChessGame game1 = new ChessGame();
+        dataAccess.createGame("player1", "game1");
+
+        // Next game should get a new ID, which should be 2
+        ChessGame game2 = new ChessGame();
+        int newGameID = dataAccess.createGame("player2", "game2");
+
+        assertEquals(2, newGameID);  // The second game should get ID 2
     }
 
-    // test updateGame method
+    // tests for updating a game
     @Test
     public void testUpdateGame_Success() throws InvalidMoveException, DataAccessException {
         ChessGame game = new ChessGame();
-        GameData gameData = new GameData(1, "player1", "player2","name", game);
-        dataAccess.createGame(gameData);
+        GameData gameData = new GameData(1, "player1", "player2", "name", game);
+        dataAccess.createGame("player1", "name");
+
+        // Simulate a move
         game.makeMove(new ChessMove(new ChessPosition(2, 7), new ChessPosition(4, 7), null));
-        GameData updatedGame = new GameData(1, "player1", "player2","name", game);
+
+        // Create an updated game data object
+        GameData updatedGame = new GameData(1, "player1", "player2", "name", game);
         dataAccess.updateGame(updatedGame);
+
+        // Assert that the game was updated correctly
         assertEquals(updatedGame, dataAccess.getGame(1));
     }
 
