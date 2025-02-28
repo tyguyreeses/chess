@@ -1,7 +1,9 @@
 package services;
 
+import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
+import jdk.jshell.spi.ExecutionControl;
 import model.*;
 import java.util.Map;
 import java.util.Objects;
@@ -97,6 +99,10 @@ public class Service {
         } catch (Exception e) {
             return new Response(500, "Error: " + e.getMessage());
         }
+    }
+
+    public Response joinGame(String authToken, ChessGame.TeamColor playerColor, int gameID) throws ExecutionControl.NotImplementedException {
+        throw new ExecutionControl.NotImplementedException("Error: not yet implemented");
     }
 
     // inner class to represent response data
