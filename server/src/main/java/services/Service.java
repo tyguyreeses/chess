@@ -1,10 +1,9 @@
 package services;
 
-import chess.ChessGame;
 import chess.ChessGame.TeamColor;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
-import jdk.jshell.spi.ExecutionControl;
+import exception.ResponseException;
 import model.*;
 import java.util.Map;
 import java.util.Objects;
@@ -12,150 +11,123 @@ import java.util.Objects;
 public class Service {
     public final DataAccess dataAccess = new DataAccess();
 
-    /** takes UserData as input and uses the dataAccess class to register the user.
-     *  If successful, return username and the created auth token.
-     *   400 if bad request,
-     *   403 if username already taken,
-     *   500 if another error,
-     */
-    public Response registerUser(UserData userData) {
-        try {
-            if (userData.username() == null || userData.password() == null || userData.email() == null) {
-                return new Response(400, "Error: bad request");
-            }
-            // create new user, throws DataAccessException if username in use
-            dataAccess.createUser(userData);
-            // create new AuthData
+    public void clearData() throws ResponseException {
+        dataAccess.clearData();
+    }
+
+     public AuthData registerUser(UserData userData) throws ResponseException {
+         dataAccess.createUser(userData);
+         String authToken = dataAccess.createAuth(userData.username());
+         return dataAccess.getAuth(authToken);
+    }
+
+
+    public AuthData loginUser(String username, String password) throws ResponseException {
+        UserData userData = dataAccess.getUser(username);
+        if (userData != null && Objects.equals(userData.password(), password)) {
+            // return success response and an authToken
             String authToken = dataAccess.createAuth(userData.username());
-            // return success response
-            return new Response(200, userData.username(), authToken);
-        } catch (DataAccessException e) {
-            return new Response(403, "Error: already taken");
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
+            return new AuthData(authToken, username);
+        } else {
+            throw new ResponseException(401, "Error: unauthorized");
         }
     }
-
-    public Response clearData() {
-        try {
-            dataAccess.clearData();
-            return new Response(200);
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    public Response loginUser(String username, String password) {
-        try {
-            // if user exists and password matches (ideally would be encrypted somehow)
-            UserData userData = dataAccess.getUser(username);
-            if (userData != null && Objects.equals(userData.password(), password)) {
-                // return success response and an authToken
-                String authToken = dataAccess.createAuth(userData.username());
-                return new Response(200, userData.username(), authToken);
-            } else {
-                return new Response(401, "Error: unauthorized");
-            }
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    public Response logoutUser(String authToken) {
-        try {
-            AuthData authData = dataAccess.getAuth(authToken);
-            if (authData != null) {
-                dataAccess.removeAuth(authToken);
-                return new Response(200);
-            } else {
-                return new Response(401, "Error: unauthorized");
-            }
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    public Response listGames(String authToken) {
-        try {
-            AuthData authData = dataAccess.getAuth(authToken);
-            if (authData != null) {
-                return new Response(200, dataAccess.getGames());
-            } else {
-                return new Response(401, "Error: unauthorized");
-            }
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    public Response createGame(String authToken, String gameName) {
-        try {
-            AuthData authData = dataAccess.getAuth(authToken);
-            if (authData != null) {
-                int gameID = dataAccess.createGame(authData.username(), gameName);
-                return new Response(200, gameID);
-            } else {
-                return new Response(401, "Error: unauthorized");
-            }
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    public Response joinGame(String authToken, TeamColor playerColor, int gameID) {
-        try {
-            GameData gameData = dataAccess.getGame(gameID);
-            AuthData authData = dataAccess.getAuth(authToken);
-
-            // if authToken empty or gameData isn't found or playerColor empty
-            if (authToken == null || gameData == null || playerColor == null) {
-                return new Response(400, "Error: bad request");
-
-            // if not a valid authToken
-            } else if (authData == null) {
-                return new Response(401, "Error: unauthorized");
-            }
-
-            // if requested color already taken
-            if ((playerColor == TeamColor.WHITE && gameData.whiteUsername() != null) ||
-                    (playerColor == TeamColor.BLACK && gameData.blackUsername() != null)) {
-                return new Response(403, "Error: already taken");
-            }
-
-            // if none of the previous errors triggered, update the game
-            String username = authData.username();
-            gameData = playerColor == TeamColor.WHITE ? gameData.withWhiteUser(username) : gameData.withBlackUser(username);
-            dataAccess.updateGame(gameData);
-            return new Response(200);
-
-        } catch (Exception e) {
-            return new Response(500, "Error: " + e.getMessage());
-        }
-    }
-
-    // inner class to represent response data
-    public record Response(int status, String message, String username, String authToken, int gameID, Map<Integer, GameData> games) {
-        // Convenience constructors for different response types
-        public Response(int status) {
-            this(status,null,null,null, -1,null);
-        }
-
-        public Response(int status, String message) {
-            this(status, message,null,null,-1,null);
-        }
-
-        public Response(int status, String username, String authToken) {
-            this(status,null, username, authToken,-1,null);
-        }
-
-        public Response(int status, Map<Integer, GameData> games) {
-            this(status,null,null,null,-1, games);
-        }
-
-        public Response(int status, int gameID) {
-            this(status,null,null,null, gameID, null);
-
-        }
-    }
+//
+//    public Res logoutUser(String authToken) {
+//        try {
+//            AuthData authData = dataAccess.getAuth(authToken);
+//            if (authData != null) {
+//                dataAccess.removeAuth(authToken);
+//                return new Res(200);
+//            } else {
+//                return new Res(401, "Error: unauthorized");
+//            }
+//        } catch (Exception e) {
+//            return new Res(500, "Error: " + e.getMessage());
+//        }
+//    }
+//
+//    public Res listGames(String authToken) {
+//        try {
+//            AuthData authData = dataAccess.getAuth(authToken);
+//            if (authData != null) {
+//                return new Res(200, dataAccess.getGames());
+//            } else {
+//                return new Res(401, "Error: unauthorized");
+//            }
+//        } catch (Exception e) {
+//            return new Res(500, "Error: " + e.getMessage());
+//        }
+//    }
+//
+//    public Res createGame(String authToken, String gameName) {
+//        try {
+//            AuthData authData = dataAccess.getAuth(authToken);
+//            if (authData != null) {
+//                int gameID = dataAccess.createGame(authData.username(), gameName);
+//                return new Res(200, gameID);
+//            } else {
+//                return new Res(401, "Error: unauthorized");
+//            }
+//        } catch (Exception e) {
+//            return new Res(500, "Error: " + e.getMessage());
+//        }
+//    }
+//
+//    public Res joinGame(String authToken, TeamColor playerColor, int gameID) {
+//        try {
+//            GameData gameData = dataAccess.getGame(gameID);
+//            AuthData authData = dataAccess.getAuth(authToken);
+//
+//            // if authToken empty or gameData isn't found or playerColor empty
+//            if (authToken == null || gameData == null || playerColor == null) {
+//                return new Res(400, "Error: bad request");
+//
+//            // if not a valid authToken
+//            } else if (authData == null) {
+//                return new Res(401, "Error: unauthorized");
+//            }
+//
+//            // if requested color already taken
+//            if ((playerColor == TeamColor.WHITE && gameData.whiteUsername() != null) ||
+//                    (playerColor == TeamColor.BLACK && gameData.blackUsername() != null)) {
+//                return new Res(403, "Error: already taken");
+//            }
+//
+//            // if none of the previous errors triggered, update the game
+//            String username = authData.username();
+//            gameData = playerColor == TeamColor.WHITE ? gameData.withWhiteUser(username) : gameData.withBlackUser(username);
+//            dataAccess.updateGame(gameData);
+//            return new Res(200);
+//
+//        } catch (Exception e) {
+//            return new Res(500, "Error: " + e.getMessage());
+//        }
+//    }
+//
+//    // inner class to represent response data
+//    public record Res(int status, String message, String username, String authToken, int gameID, Map<Integer, GameData> games) {
+//        // Convenience constructors for different response types
+//        public Res(int status) {
+//            this(status,null,null,null, -1,null);
+//        }
+//
+//        public Res(int status, String message) {
+//            this(status, message,null,null,-1,null);
+//        }
+//
+//        public Res(int status, String username, String authToken) {
+//            this(status,null, username, authToken,-1,null);
+//        }
+//
+//        public Res(int status, Map<Integer, GameData> games) {
+//            this(status,null,null,null,-1, games);
+//        }
+//
+//        public Res(int status, int gameID) {
+//            this(status,null,null,null, gameID, null);
+//
+//        }
+//    }
 }
 

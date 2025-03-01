@@ -3,6 +3,7 @@ import java.util.*;
 
 
 import chess.ChessGame;
+import exception.ResponseException;
 import model.*;
 
 public class DataAccess {
@@ -13,25 +14,32 @@ public class DataAccess {
     /**
      * resets all stored data
      */
-    public void clearData() {
-        users.clear();
-        authTokens.clear();
-        games.clear();
+    public void clearData() throws ResponseException {
+        try {
+            users.clear();
+            authTokens.clear();
+            games.clear();
+        } catch (Exception e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
 
     /**
-     * returns username if user exists, otherwise null
+     * returns userData if user exists, otherwise null
      */
-    public UserData getUser(String username) {
+    public UserData getUser(String username) throws ResponseException {
         return users.get(username);
     }
 
     /**
      * creates a new user if user isn't already in the database
      */
-    public void createUser(UserData userData) throws DataAccessException {
+    public void createUser(UserData userData) throws ResponseException {
+        if (userData.password() == null) {
+            throw new ResponseException(400, "Error: unauthorized");
+        }
         if (getUser(userData.username()) != null) {
-            throw new DataAccessException("Error: User already exists in the database");
+            throw new ResponseException(403, "Error: already taken");
         }
         users.put(userData.username(), userData); // Adds the username and password
     }
