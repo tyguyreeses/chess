@@ -1,8 +1,10 @@
 package mytests.service;
 
+import chess.ChessGame;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,11 @@ public class ServiceTests {
         service = new Service();
         // reset database
         service.clearData();
+        // add a test authToken to database
         service.dataAccess.authTokens.put("test", new AuthData("test","test"));
+        // add a test game to database
+        GameData gameData = new GameData(1, "occupied", null, "name", new ChessGame());
+        service.dataAccess.games.put(1, gameData);
     }
 
     @Test
@@ -231,5 +237,48 @@ public class ServiceTests {
 
         // Assert that the response contains the expected error message
         assertEquals("Error: unauthorized", response.message());
+    }
+
+    @Test
+    public void testJoinGame_Success() {
+        Service.Response response = service.joinGame("test", ChessGame.TeamColor.BLACK, 1);
+        assertEquals(200, response.status());
+        assertEquals("test", service.dataAccess.getGame(1).blackUsername());
+    }
+
+    @Test
+    public void testJoinGame_BadRequest_NullAuthToken() {
+        Service.Response response = service.joinGame(null, ChessGame.TeamColor.WHITE, 1);
+        assertEquals(400, response.status());
+        assertEquals("Error: bad request", response.message());
+    }
+
+    @Test
+    public void testJoinGame_BadRequest_NullPlayerColor() {
+        Service.Response response = service.joinGame("test", null, 1);
+        assertEquals(400, response.status());
+        assertEquals("Error: bad request", response.message());
+    }
+
+    @Test
+    public void testJoinGame_BadRequest_GameNotFound() {
+        Service.Response response = service.joinGame("test", ChessGame.TeamColor.WHITE, 999);
+        assertEquals(400, response.status());
+        assertEquals("Error: bad request", response.message());
+    }
+
+    @Test
+    public void testJoinGame_Unauthorized_InvalidAuthToken() {
+        Service.Response response = service.joinGame("invalidToken", ChessGame.TeamColor.WHITE, 1);
+        assertEquals(401, response.status());
+        assertEquals("Error: unauthorized", response.message());
+    }
+
+    @Test
+    public void testJoinGame_AlreadyTaken() {
+        // Assign WHITE team to another user
+        Service.Response response = service.joinGame("test", ChessGame.TeamColor.WHITE, 1);
+        assertEquals(403, response.status());
+        assertEquals("Error: already taken", response.message());
     }
 }

@@ -1,6 +1,7 @@
 package services;
 
 import chess.ChessGame;
+import chess.ChessGame.TeamColor;
 import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import jdk.jshell.spi.ExecutionControl;
@@ -101,8 +102,35 @@ public class Service {
         }
     }
 
-    public Response joinGame(String authToken, ChessGame.TeamColor playerColor, int gameID) throws ExecutionControl.NotImplementedException {
-        throw new ExecutionControl.NotImplementedException("Error: not yet implemented");
+    public Response joinGame(String authToken, TeamColor playerColor, int gameID) {
+        try {
+            GameData gameData = dataAccess.getGame(gameID);
+            AuthData authData = dataAccess.getAuth(authToken);
+
+            // if authToken empty or gameData isn't found or playerColor empty
+            if (authToken == null || gameData == null || playerColor == null) {
+                return new Response(400, "Error: bad request");
+
+            // if not a valid authToken
+            } else if (authData == null) {
+                return new Response(401, "Error: unauthorized");
+            }
+
+            // if requested color already taken
+            if ((playerColor == TeamColor.WHITE && gameData.whiteUsername() != null) ||
+                    (playerColor == TeamColor.BLACK && gameData.blackUsername() != null)) {
+                return new Response(403, "Error: already taken");
+            }
+
+            // if none of the previous errors triggered, update the game
+            String username = authData.username();
+            gameData = playerColor == TeamColor.WHITE ? gameData.withWhiteUser(username) : gameData.withBlackUser(username);
+            dataAccess.updateGame(gameData);
+            return new Response(200);
+
+        } catch (Exception e) {
+            return new Response(500, "Error: " + e.getMessage());
+        }
     }
 
     // inner class to represent response data
