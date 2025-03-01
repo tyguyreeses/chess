@@ -6,9 +6,9 @@ import chess.ChessGame;
 import model.*;
 
 public class DataAccess {
-    private final Map<String, UserData> users = new HashMap<>(); // simulates a database with username: UserData
+    public final Map<String, UserData> users = new HashMap<>(); // simulates a database with username: UserData
     public final Map<String, AuthData> authTokens = new HashMap<>(); // simulates database with authToken: AuthData
-    private final Map<Integer, GameData> games = new HashMap<>(); // simulates database with gameID: GameData
+    public final Map<Integer, GameData> games = new HashMap<>(); // simulates database with gameID: GameData
 
     /**
      * resets all stored data
