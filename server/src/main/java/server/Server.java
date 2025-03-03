@@ -6,6 +6,9 @@ import model.*;
 import services.Service;
 import spark.*;
 
+import java.util.Collection;
+import java.util.Map;
+
 public class Server {
 
     Gson gson = new Gson();
@@ -21,6 +24,7 @@ public class Server {
         Spark.post("/user", this::registerUser);
         Spark.post("/session", this::loginUser);
         Spark.delete("/session", this::logoutUser);
+        Spark.get("/game", this::listGames);
         Spark.exception(ResponseException.class, this::exceptionHandler);
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
@@ -62,6 +66,11 @@ public class Server {
         String authToken = req.headers("authorization");
         service.logoutUser(authToken);
         return "";
+    }
+
+    private Object listGames(Request req, Response res) throws ResponseException {
+        String authToken = req.headers("authorization");
+        return Map.of("games", service.listGames(authToken));
     }
 
 }

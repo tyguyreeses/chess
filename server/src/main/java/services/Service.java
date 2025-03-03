@@ -5,7 +5,8 @@ import dataaccess.DataAccess;
 import dataaccess.DataAccessException;
 import exception.ResponseException;
 import model.*;
-import java.util.Map;
+
+import java.util.Collection;
 import java.util.Objects;
 
 public class Service {
@@ -34,26 +35,28 @@ public class Service {
     }
 
     public void logoutUser(String authToken) throws ResponseException {
+        try {
             AuthData authData = dataAccess.getAuth(authToken);
             if (authData != null) {
-                try {dataAccess.removeAuth(authToken);} catch (DataAccessException e) {
-                    throw new ResponseException(500, "Error: " + e.getMessage());
-                }
-            } else { throw new ResponseException(401, "Error: unauthorized"); }
+                dataAccess.removeAuth(authToken);
+            } else {
+                throw new ResponseException(401, "Error: unauthorized");
+            }
+        } catch (ResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
-//
-//    public Res listGames(String authToken) {
-//        try {
-//            AuthData authData = dataAccess.getAuth(authToken);
-//            if (authData != null) {
-//                return new Res(200, dataAccess.getGames());
-//            } else {
-//                return new Res(401, "Error: unauthorized");
-//            }
-//        } catch (Exception e) {
-//            return new Res(500, "Error: " + e.getMessage());
-//        }
-//    }
+
+    public Collection<GameData> listGames(String authToken) throws ResponseException {
+        AuthData authData = dataAccess.getAuth(authToken);
+        if (authData != null) {
+            return dataAccess.getGames().values();
+        } else {
+            throw new ResponseException(401, "Error: unauthorized");
+        }
+    }
 //
 //    public Res createGame(String authToken, String gameName) {
 //        try {
