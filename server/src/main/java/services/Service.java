@@ -32,20 +32,15 @@ public class Service {
             throw new ResponseException(401, "Error: unauthorized");
         }
     }
-//
-//    public Res logoutUser(String authToken) {
-//        try {
-//            AuthData authData = dataAccess.getAuth(authToken);
-//            if (authData != null) {
-//                dataAccess.removeAuth(authToken);
-//                return new Res(200);
-//            } else {
-//                return new Res(401, "Error: unauthorized");
-//            }
-//        } catch (Exception e) {
-//            return new Res(500, "Error: " + e.getMessage());
-//        }
-//    }
+
+    public void logoutUser(String authToken) throws ResponseException {
+            AuthData authData = dataAccess.getAuth(authToken);
+            if (authData != null) {
+                try {dataAccess.removeAuth(authToken);} catch (DataAccessException e) {
+                    throw new ResponseException(500, "Error: " + e.getMessage());
+                }
+            } else { throw new ResponseException(401, "Error: unauthorized"); }
+    }
 //
 //    public Res listGames(String authToken) {
 //        try {
