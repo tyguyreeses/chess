@@ -31,7 +31,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testRegisterUser() throws ResponseException {
+    public void testRegisterUser_Success() throws ResponseException {
         // Arrange
         UserData user = new UserData("testUser", "testPassword", "testEmail");
 
@@ -41,6 +41,16 @@ public class ServiceTests {
         // Assert
         assertNotNull(authData, "AuthData should not be null");
         assertEquals("testUser", authData.username(), "Username should match");
+    }
+
+    @Test
+    public void testRegisterUser_Failure() throws ResponseException {
+        // Arrange
+        UserData user = new UserData("testUser", null, "testEmail");
+
+        // Assert
+        assertThrows(ResponseException.class, () -> service.registerUser(user),
+                "Logging in with a wrong password should throw a ResponseException");
     }
 
     @Test

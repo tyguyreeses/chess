@@ -87,9 +87,7 @@ public class Server {
 
     private Object listGames(Request req, Response res) throws ResponseException {
         String authToken = req.headers("authorization");
-        Object map = Map.of("games", service.listGames(authToken));
-        Object ressult = gson.toJson(map);
-        return ressult;
+        return gson.toJson(Map.of("games", service.listGames(authToken)));
     }
 
 }

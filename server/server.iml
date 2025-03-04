@@ -6,9 +6,10 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/src/test/java/mytests/dataaccess" />
-      <excludeFolder url="file://$MODULE_DIR$/src/test/java/mytests/handler" />
-      <excludeFolder url="file://$MODULE_DIR$/src/test/java/mytests/server" />
+      <excludeFolder url="file://$MODULE_DIR$/src/test/java/oldTests" />
+      <excludeFolder url="file://$MODULE_DIR$/src/test/java/oldTests/dataaccess" />
+      <excludeFolder url="file://$MODULE_DIR$/src/test/java/oldTests/handler" />
+      <excludeFolder url="file://$MODULE_DIR$/src/test/java/oldTests/server" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
