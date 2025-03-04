@@ -36,12 +36,8 @@ public class Service {
 
     public void logoutUser(String authToken) throws ResponseException {
         try {
-            AuthData authData = dataAccess.getAuth(authToken);
-            if (authData != null) {
-                dataAccess.removeAuth(authToken);
-            } else {
-                throw new ResponseException(401, "Error: unauthorized");
-            }
+            validateAuthData(authToken);
+            dataAccess.removeAuth(authToken);
         } catch (ResponseException e) {
             throw e;
         } catch (Exception e) {
@@ -50,82 +46,53 @@ public class Service {
     }
 
     public Collection<GameData> listGames(String authToken) throws ResponseException {
-        AuthData authData = dataAccess.getAuth(authToken);
-        if (authData != null) {
-            return dataAccess.getGames().values();
-        } else {
+        validateAuthData(authToken);
+        return dataAccess.getGames().values();
+    }
+
+    public Integer createGame(String authToken, String gameName) throws ResponseException {
+        try {
+            validateAuthData(authToken);
+            return dataAccess.createGame(gameName);
+        } catch (ResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(500, "Error: " + e.getMessage());
+        }
+    }
+
+    public void joinGame(String authToken, TeamColor playerColor, int gameID) throws ResponseException {
+        try {
+            GameData gameData = dataAccess.getGame(gameID);
+            // if authToken empty or gameData isn't found or playerColor empty
+            if (authToken == null || gameData == null || playerColor == null) {
+                throw new ResponseException(400, "Error: bad request");
+            }
+            validateAuthData(authToken);
+            AuthData authData = dataAccess.getAuth(authToken);
+
+            // if requested color already taken
+            if ((playerColor == TeamColor.WHITE && gameData.whiteUsername() != null) ||
+                    (playerColor == TeamColor.BLACK && gameData.blackUsername() != null)) {
+                throw new ResponseException(403, "Error: already taken");
+            }
+
+            // if none of the previous errors triggered, update the game
+            String username = authData.username();
+            gameData = playerColor == TeamColor.WHITE ? gameData.withWhiteUser(username) : gameData.withBlackUser(username);
+            dataAccess.updateGame(gameData);
+
+        } catch (ResponseException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseException(500, "Error: " + e.getMessage());
+        }
+    }
+
+    private void validateAuthData(String authToken) throws ResponseException {
+        if (dataAccess.getAuth(authToken) == null) {
             throw new ResponseException(401, "Error: unauthorized");
         }
     }
-//
-//    public Res createGame(String authToken, String gameName) {
-//        try {
-//            AuthData authData = dataAccess.getAuth(authToken);
-//            if (authData != null) {
-//                int gameID = dataAccess.createGame(authData.username(), gameName);
-//                return new Res(200, gameID);
-//            } else {
-//                return new Res(401, "Error: unauthorized");
-//            }
-//        } catch (Exception e) {
-//            return new Res(500, "Error: " + e.getMessage());
-//        }
-//    }
-//
-//    public Res joinGame(String authToken, TeamColor playerColor, int gameID) {
-//        try {
-//            GameData gameData = dataAccess.getGame(gameID);
-//            AuthData authData = dataAccess.getAuth(authToken);
-//
-//            // if authToken empty or gameData isn't found or playerColor empty
-//            if (authToken == null || gameData == null || playerColor == null) {
-//                return new Res(400, "Error: bad request");
-//
-//            // if not a valid authToken
-//            } else if (authData == null) {
-//                return new Res(401, "Error: unauthorized");
-//            }
-//
-//            // if requested color already taken
-//            if ((playerColor == TeamColor.WHITE && gameData.whiteUsername() != null) ||
-//                    (playerColor == TeamColor.BLACK && gameData.blackUsername() != null)) {
-//                return new Res(403, "Error: already taken");
-//            }
-//
-//            // if none of the previous errors triggered, update the game
-//            String username = authData.username();
-//            gameData = playerColor == TeamColor.WHITE ? gameData.withWhiteUser(username) : gameData.withBlackUser(username);
-//            dataAccess.updateGame(gameData);
-//            return new Res(200);
-//
-//        } catch (Exception e) {
-//            return new Res(500, "Error: " + e.getMessage());
-//        }
-//    }
-//
-//    // inner class to represent response data
-//    public record Res(int status, String message, String username, String authToken, int gameID, Map<Integer, GameData> games) {
-//        // Convenience constructors for different response types
-//        public Res(int status) {
-//            this(status,null,null,null, -1,null);
-//        }
-//
-//        public Res(int status, String message) {
-//            this(status, message,null,null,-1,null);
-//        }
-//
-//        public Res(int status, String username, String authToken) {
-//            this(status,null, username, authToken,-1,null);
-//        }
-//
-//        public Res(int status, Map<Integer, GameData> games) {
-//            this(status,null,null,null,-1, games);
-//        }
-//
-//        public Res(int status, int gameID) {
-//            this(status,null,null,null, gameID, null);
-//
-//        }
-//    }
 }
 

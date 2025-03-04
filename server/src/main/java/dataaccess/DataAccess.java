@@ -27,7 +27,7 @@ public class DataAccess {
     /**
      * returns userData if user exists, otherwise null
      */
-    public UserData getUser(String username) throws ResponseException {
+    public UserData getUser(String username) {
         return users.get(username);
     }
 
@@ -71,14 +71,14 @@ public class DataAccess {
     /**
      * creates a new game given a username and a password, creating an ID using a PriorityQueue
      */
-    public int createGame(String username, String gameName) {
+    public int createGame(String gameName) {
         int gameID;
         if (!availableIds.isEmpty()) {
             gameID = availableIds.poll();  // Reuse an ID if available
         } else {
             gameID = nextId++;
         }
-        games.put(gameID, new GameData(gameID, username, null, gameName, new ChessGame()));
+        games.put(gameID, new GameData(gameID, null, null, gameName, new ChessGame()));
         return gameID;
     }
 

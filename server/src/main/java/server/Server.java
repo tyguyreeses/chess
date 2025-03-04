@@ -1,7 +1,9 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import exception.ResponseException;
+import handlers.JoinRequest;
 import model.*;
 import services.Service;
 import spark.*;
@@ -24,7 +26,9 @@ public class Server {
         Spark.post("/user", this::registerUser);
         Spark.post("/session", this::loginUser);
         Spark.delete("/session", this::logoutUser);
+        Spark.post("/game", this::createGame);
         Spark.get("/game", this::listGames);
+        Spark.put("/game", this::joinGame);
         Spark.exception(ResponseException.class, this::exceptionHandler);
 
         //This line initializes the server and can be removed once you have a functioning endpoint 
@@ -46,7 +50,6 @@ public class Server {
 
     private Object clearData(Request req, Response res) throws ResponseException {
         service.clearData();
-        res.status(204);
         return "";
     }
 
@@ -68,9 +71,25 @@ public class Server {
         return "";
     }
 
+    private Object createGame(Request req, Response res) throws ResponseException {
+        String authToken = req.headers("authorization");
+        JsonObject jsonObject = gson.fromJson(req.body(), JsonObject.class);
+        String gameName = jsonObject.get("gameName").getAsString();
+        return gson.toJson(Map.of("gameID", service.createGame(authToken, gameName)));
+    }
+
+    private Object joinGame(Request req, Response res) throws ResponseException {
+        String authToken = req.headers("authorization");
+        JoinRequest joinRequest = gson.fromJson(req.body(), JoinRequest.class);
+        service.joinGame(authToken, joinRequest.playerColor(), joinRequest.gameID());
+        return "";
+    }
+
     private Object listGames(Request req, Response res) throws ResponseException {
         String authToken = req.headers("authorization");
-        return Map.of("games", service.listGames(authToken));
+        Object map = Map.of("games", service.listGames(authToken));
+        Object ressult = gson.toJson(map);
+        return ressult;
     }
 
 }
