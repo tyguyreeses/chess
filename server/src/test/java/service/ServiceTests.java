@@ -1,4 +1,4 @@
-package java.service;
+package service;
 
 import chess.ChessGame;
 import exception.ResponseException;
@@ -44,7 +44,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testRegisterUser_Failure() throws ResponseException {
+    public void testRegisterUser_Failure() {
         // Arrange
         UserData user = new UserData("testUser", null, "testEmail");
 
