@@ -31,7 +31,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testRegisterUser_Success() throws ResponseException {
+    public void testRegisterUserSuccess() throws ResponseException {
         // Arrange
         UserData user = new UserData("testUser", "testPassword", "testEmail");
 
@@ -44,7 +44,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testRegisterUser_Failure() {
+    public void testRegisterUserFailure() {
         // Arrange
         UserData user = new UserData("testUser", null, "testEmail");
 
@@ -54,7 +54,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testLoginUser_Success() throws ResponseException {
+    public void testLoginUserSuccess() throws ResponseException {
         // Arrange
         UserData user = new UserData("testUser", "testPassword", "testEmail");
         service.registerUser(user);
@@ -68,7 +68,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testLoginUser_Failure_InvalidPassword() {
+    public void testLoginUserFailureInvalidPassword() {
         // Arrange
         UserData user = new UserData("testUser", "testPassword", "testEmail");
         try {
@@ -95,7 +95,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testJoinGame_Success() throws ResponseException {
+    public void testJoinGameSuccess() throws ResponseException {
         // Arrange
         Integer gameId = service.createGame("test", "Test Game");
 
@@ -109,7 +109,7 @@ public class ServiceTests {
     }
 
     @Test
-    public void testJoinGame_AlreadyTaken() throws ResponseException {
+    public void testJoinGameAlreadyTaken() throws ResponseException {
         // Arrange
         Integer gameId = service.createGame("test", "Test Game");
         service.joinGame("test", ChessGame.TeamColor.WHITE, gameId);

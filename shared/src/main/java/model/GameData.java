@@ -9,7 +9,7 @@ public record GameData(int gameID, String whiteUsername, String blackUsername, S
     public GameData withBlackUser(String username) {
         return new GameData(gameID, whiteUsername, username, gameName, game);
     }
-    public GameData withNewData(ChessGame chessGame) {
-        return new GameData(gameID, whiteUsername, blackUsername, gameName, chessGame);
-    }
+//    public GameData withNewData(ChessGame chessGame) {
+//        return new GameData(gameID, whiteUsername, blackUsername, gameName, chessGame);
+//    }
 }
