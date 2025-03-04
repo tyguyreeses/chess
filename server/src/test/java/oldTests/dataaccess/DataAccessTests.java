@@ -2,6 +2,7 @@ package mytests.dataaccess;
 
 import chess.*;
 import dataaccess.*;
+import exception.ResponseException;
 import model.*;
 import org.junit.jupiter.api.*;  // import JUnit 5 annotations
 import static org.junit.jupiter.api.Assertions.*;  // import assertion methods
@@ -20,7 +21,7 @@ public class DataAccessTests {
 
     // this runs after each test method
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws ResponseException {
         // clean up any state after each test
         dataAccess.clearData();
     }
@@ -149,7 +150,7 @@ public class DataAccessTests {
             dataAccess.createUser(user);
             dataAccess.clearData(); // Clear the data
             assertNull(dataAccess.getUser("user1")); // verify user is cleared
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | ResponseException e) {
             fail("DataAccessException should not be thrown");
         }
     }
