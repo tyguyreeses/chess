@@ -35,7 +35,7 @@ public class DataAccess {
      * creates a new user if user isn't already in the database
      */
     public void createUser(UserData userData) throws ResponseException {
-        if (userData.password() == null) {
+        if (userData.password() == null || userData.username() == null) {
             throw new ResponseException(400, "Error: unauthorized");
         }
         if (getUser(userData.username()) != null) {

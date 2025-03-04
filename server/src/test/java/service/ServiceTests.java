@@ -1,134 +1,201 @@
-package java.service;
+package service;
 
-import chess.ChessGame;
+import chess.ChessGame.TeamColor;
+import dataaccess.DataAccess;
 import exception.ResponseException;
 import model.*;
-import org.junit.jupiter.api.*;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Collection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import services.Service;
 
-public class ServiceTests {
+import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+class ServiceTests {
     private Service service;
+    private DataAccess dataAccess;
 
     @BeforeEach
-    public void setUp() {
-        // Set up the initial state for each test
+    void setUp() {
         service = new Service();
-        service.dataAccess.authTokens.put("test", new AuthData("test","test"));
-
-    }
-
-    @AfterEach
-    public void tearDown() {
-        // Clean up any state after each test
-        // If needed, clear data from the database or reset configurations
-        try {
-            service.clearData();
-        } catch (Exception ignored) {
-        }
+        dataAccess = service.dataAccess;
     }
 
     @Test
-    public void testRegisterUserSuccess() throws ResponseException {
-        // Arrange
-        UserData user = new UserData("testUser", "testPassword", "testEmail");
-
-        // Act
-        AuthData authData = service.registerUser(user);
-
-        // Assert
-        assertNotNull(authData, "AuthData should not be null");
-        assertEquals("testUser", authData.username(), "Username should match");
+    void clearDataSuccess() throws ResponseException {
+        service.clearData();
+        assertTrue(dataAccess.users.isEmpty());
+        assertTrue(dataAccess.authTokens.isEmpty());
+        assertTrue(dataAccess.games.isEmpty());
     }
 
     @Test
-    public void testRegisterUserFailure() {
-        // Arrange
-        UserData user = new UserData("testUser", null, "testEmail");
-
-        // Assert
-        assertThrows(ResponseException.class, () -> service.registerUser(user),
-                "Logging in with a wrong password should throw a ResponseException");
+    void registerUserSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        assertNotNull(auth);
+        assertEquals("testUser", auth.username());
     }
 
     @Test
-    public void testLoginUserSuccess() throws ResponseException {
-        // Arrange
-        UserData user = new UserData("testUser", "testPassword", "testEmail");
+    void registerUserAlreadyTaken() {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        assertDoesNotThrow(() -> service.registerUser(user));
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.registerUser(user));
+        assertEquals(403, exception.statusCode());
+    }
+
+    @Test
+    void registerUserEmptyPassword() {
+        UserData user = new UserData("testUser", null, "email@test.com");
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.registerUser(user));
+        assertEquals(400, exception.statusCode());
+    }
+
+    @Test
+    void registerUserEmptyUsername() {
+        UserData user = new UserData(null, "testPassword", "email@test.com");
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.registerUser(user));
+        assertEquals(400, exception.statusCode());
+    }
+
+    @Test
+    void loginUserSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
         service.registerUser(user);
-
-        // Act
-        AuthData authData = service.loginUser("testUser", "testPassword");
-
-        // Assert
-        assertNotNull(authData, "AuthData should not be null");
-        assertEquals("testUser", authData.username(), "Username should match");
+        AuthData auth = service.loginUser("testUser", "password");
+        assertNotNull(auth);
+        assertEquals("testUser", auth.username());
     }
 
     @Test
-    public void testLoginUserFailureInvalidPassword() {
-        // Arrange
-        UserData user = new UserData("testUser", "testPassword", "testEmail");
-        try {
-            service.registerUser(user);
-        } catch (ResponseException e) {
-            fail("User registration should not fail");
-        }
-
-        // Act & Assert
-        assertThrows(ResponseException.class, () -> service.loginUser("testUser", "wrongPassword"),
-                "Logging in with a wrong password should throw a ResponseException");
+    void loginUserWrongPassword() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        service.registerUser(user);
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.loginUser("testUser", "wrongPass"));
+        assertEquals(401, exception.statusCode());
     }
 
     @Test
-    public void testCreateGame() throws ResponseException {
-        // Arrange
-        String gameName = "Test Game";
-
-        // Act
-        Integer gameId = service.createGame("test", gameName);
-
-        // Assert
-        assertNotNull(gameId, "Game ID should not be null");
+    void loginUserNonexistentUser() {
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.loginUser("nonUser", "password"));
+        assertEquals(401, exception.statusCode());
     }
 
     @Test
-    public void testJoinGameSuccess() throws ResponseException {
-        // Arrange
-        Integer gameId = service.createGame("test", "Test Game");
-
-        // Act
-        service.joinGame("test", ChessGame.TeamColor.WHITE, gameId);
-
-        // Assert
-        GameData gameData = service.dataAccess.getGame(gameId);
-        assertNotNull(gameData, "GameData should not be null");
-        assertEquals("test", gameData.whiteUsername(), "Username should match for white team");
+    void logoutUserSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        service.logoutUser(auth.authToken());
+        assertNull(dataAccess.getAuth(auth.authToken()));
     }
 
     @Test
-    public void testJoinGameAlreadyTaken() throws ResponseException {
-        // Arrange
-        Integer gameId = service.createGame("test", "Test Game");
-        service.joinGame("test", ChessGame.TeamColor.WHITE, gameId);
-
-        // Act & Assert
-        assertThrows(ResponseException.class, () -> service.joinGame("test", ChessGame.TeamColor.WHITE, gameId),
-                "Joining a game with an already taken color should throw a 403 error");
+    void logoutUserInvalidToken() {
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.logoutUser("invalidToken"));
+        assertEquals(401, exception.statusCode());
     }
 
     @Test
-    public void testListGames() throws ResponseException {
-        // Arrange
-        service.createGame("test", "Test Game");
+    void logoutUserTwice() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        service.logoutUser(auth.authToken());
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.logoutUser(auth.authToken()));
+        assertEquals(401, exception.statusCode());
+    }
 
-        // Act
-        Collection<GameData> games = service.listGames("test");
+    @Test
+    void listGamesSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Integer gameId = service.createGame(auth.authToken(), "Chess Match");
+        Collection<GameData> games = service.listGames(auth.authToken());
+        assertFalse(games.isEmpty());
+        assertEquals(1, games.size());
+    }
 
-        // Assert
-        assertNotNull(games, "Games list should not be null");
-        assertFalse(games.isEmpty(), "Games list should not be empty");
+    @Test
+    void listGamesInvalidToken() {
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.listGames("invalidToken"));
+        assertEquals(401, exception.statusCode());
+    }
+
+    @Test
+    void listGamesEmpty() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Collection<GameData> games = service.listGames(auth.authToken());
+        assertNotNull(games);
+        assertTrue(games.isEmpty());
+    }
+
+    @Test
+    void createGameSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Integer gameId = service.createGame(auth.authToken(), "Game1");
+        assertNotNull(gameId);
+        assertEquals("Game1", dataAccess.getGame(gameId).gameName());
+    }
+
+    @Test
+    void createGameInvalidToken() {
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.createGame("invalidToken", "Game1"));
+        assertEquals(401, exception.statusCode());
+    }
+
+    @Test
+    void joinGameWhiteSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Integer gameId = service.createGame(auth.authToken(), "Chess Match");
+        service.joinGame(auth.authToken(), TeamColor.WHITE, gameId);
+        assertEquals("testUser", dataAccess.getGame(gameId).whiteUsername());
+    }
+
+    @Test
+    void joinGameBlackSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Integer gameId = service.createGame(auth.authToken(), "Chess Match");
+        service.joinGame(auth.authToken(), TeamColor.BLACK, gameId);
+        assertEquals("testUser", dataAccess.getGame(gameId).blackUsername());
+    }
+
+    @Test
+    void joinGameInvalidToken() {
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.joinGame("invalidToken", TeamColor.WHITE, 1));
+        assertEquals(400, exception.statusCode());
+    }
+
+    @Test
+    void joinGameAlreadyTakenColor() throws ResponseException {
+        UserData user1 = new UserData("player1", "pass", "email1@test.com");
+        UserData user2 = new UserData("player2", "pass", "email2@test.com");
+        AuthData auth1 = service.registerUser(user1);
+        AuthData auth2 = service.registerUser(user2);
+        Integer gameId = service.createGame(auth1.authToken(), "Chess Match");
+        service.joinGame(auth1.authToken(), TeamColor.WHITE, gameId);
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.joinGame(auth2.authToken(), TeamColor.WHITE, gameId));
+        assertEquals(403, exception.statusCode());
+    }
+
+    @Test
+    void joinGameInvalidGameID() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.joinGame(auth.authToken(), TeamColor.WHITE, 999));
+        assertEquals(400, exception.statusCode());
+    }
+
+    @Test
+    void joinGameNullPlayerColor() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        AuthData auth = service.registerUser(user);
+        Integer gameId = service.createGame(auth.authToken(), "Chess Match");
+        ResponseException exception = assertThrows(ResponseException.class, () -> service.joinGame(auth.authToken(), null, gameId));
+        assertEquals(400, exception.statusCode());
     }
 }
