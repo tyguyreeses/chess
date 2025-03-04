@@ -1,4 +1,4 @@
-package service;
+package java.service;
 
 import chess.ChessGame;
 import exception.ResponseException;
