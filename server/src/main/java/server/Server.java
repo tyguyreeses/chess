@@ -7,8 +7,6 @@ import handlers.JoinRequest;
 import model.*;
 import services.Service;
 import spark.*;
-
-import java.util.Collection;
 import java.util.Map;
 
 public class Server {
