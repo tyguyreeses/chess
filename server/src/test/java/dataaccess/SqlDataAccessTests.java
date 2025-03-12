@@ -1,28 +1,29 @@
 package dataaccess;
 
 import exception.ResponseException;
+import model.UserData;
 import org.junit.jupiter.api.*;
 
 import java.sql.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SqlDataAccessTests {
-    private SqlDataAccess sqlDataAccess;
+    private SqlDataAccess db;
     protected Connection conn;
 
     @BeforeEach
     public void setup() {
-        this.sqlDataAccess = new SqlDataAccess();
+        this.db = new SqlDataAccess();
         try {
             conn = DatabaseManager.getConnection();
-            addTestUser();
         } catch (ResponseException e) {
             System.out.println("Couldn't set up the test: " + e.getMessage());
         }
     }
 
     @AfterEach
-    public void tearDown() throws SQLException {
+    public void tearDown() throws SQLException, ResponseException {
+        db.clearData();
         if (conn != null) {
             conn.close();
         }
@@ -60,25 +61,27 @@ public class SqlDataAccessTests {
              }
     }
 
+    @Test
+    public void testRegisterUserAdded() throws ResponseException {
+        UserData newUser = new UserData("newUser", "123", "test@mail.com");
+        db.createUser(newUser);
+        assertNotNull(db.getUser("newUser"));
+    }
 
+    @Test
+    public void testRegisterUserAlreadyTaken() {
+        UserData newUser = new UserData("testuser", "123", "test@mail.com");
+        ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
+        assertEquals(400, ex.statusCode());
+    }
 
-
-    public void addTestUser() throws ResponseException {
-        String insertUser = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-
-        try (PreparedStatement statement = conn.prepareStatement(insertUser)) {
-            // Set parameters for username and password
-            statement.setString(1, "testuser");
-            statement.setString(2, "testpassword");
-            statement.setString(3, "testemail");
-
-            // Execute the insert statement and get the result
-            int rowsAffected = statement.executeUpdate();
-
-            // Assert that the insertion affected 1 row
-            assertEquals(1, rowsAffected, "User should be inserted into the table.");
-        } catch (Exception e) {
-            throw new ResponseException(500, "Couldn't add test user: " + e.getMessage());
-        }
+    @Test
+    public void testClearData() throws ResponseException {
+        UserData newUser = new UserData("newUser", "123", "test@mail.com");
+        db.createUser(newUser);
+        assertNotNull(db.getUser("newUser"));
+        db.clearData();
+        assertNull(db.getUser("newUser"));
     }
 }
+
