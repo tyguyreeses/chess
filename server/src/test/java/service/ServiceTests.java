@@ -1,11 +1,13 @@
 package service;
 
 import chess.ChessGame.TeamColor;
+import dataaccess.DataAccess;
 import dataaccess.MemoryDataAccess;
 import exception.ResponseException;
 import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import server.Server;
 import services.Service;
 
 import java.util.Collection;
@@ -14,21 +16,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ServiceTests {
     private Service service;
-    private MemoryDataAccess dataAccess = new MemoryDataAccess();
+    private DataAccess dataAccess;
 
     @BeforeEach
     void setUp() {
-        this.dataAccess = new MemoryDataAccess();
-        this.service = new Service(dataAccess);
-
+        this.service = new Service();
+        this.dataAccess = service.dataAccess;
     }
 
     @Test
     void clearDataSuccess() throws ResponseException {
+        UserData user = new UserData("testUser", "password", "email@test.com");
+        service.registerUser(user);
+        assertNotNull(dataAccess.getUser("testUser"));
         service.clearData();
-        assertTrue(dataAccess.users.isEmpty());
-        assertTrue(dataAccess.authTokens.isEmpty());
-        assertTrue(dataAccess.games.isEmpty());
+        assertNull(dataAccess.getUser("testUser"));
     }
 
     @Test
