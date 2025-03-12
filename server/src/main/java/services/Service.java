@@ -9,7 +9,11 @@ import java.util.Collection;
 import java.util.Objects;
 
 public class Service {
-    public final DataAccess dataAccess = new DataAccess();
+    public final DataAccess dataAccess;
+
+    public Service(DataAccess dataAccess) {
+        this.dataAccess = dataAccess;
+    }
 
     public void clearData() throws ResponseException {
         dataAccess.clearData();

@@ -2,6 +2,8 @@ package server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import dataaccess.DataAccess;
+import dataaccess.MemoryDataAccess;
 import exception.ResponseException;
 import handlers.JoinRequest;
 import model.*;
@@ -12,7 +14,9 @@ import java.util.Map;
 public class Server {
 
     Gson gson = new Gson();
-    Service service = new Service();
+    DataAccess dataAccess = new MemoryDataAccess();
+    Service service = new Service(dataAccess);
+
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);

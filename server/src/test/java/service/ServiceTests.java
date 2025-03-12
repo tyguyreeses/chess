@@ -1,7 +1,7 @@
 package service;
 
 import chess.ChessGame.TeamColor;
-import dataaccess.DataAccess;
+import dataaccess.MemoryDataAccess;
 import exception.ResponseException;
 import model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,12 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ServiceTests {
     private Service service;
-    private DataAccess dataAccess;
+    private MemoryDataAccess dataAccess = new MemoryDataAccess();
 
     @BeforeEach
     void setUp() {
-        service = new Service();
-        dataAccess = service.dataAccess;
+        this.dataAccess = new MemoryDataAccess();
+        this.service = new Service(dataAccess);
+
     }
 
     @Test
