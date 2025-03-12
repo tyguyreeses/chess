@@ -1,5 +1,6 @@
 package dataaccess;
 
+import chess.ChessGame;
 import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
@@ -7,22 +8,25 @@ import model.UserData;
 import java.sql.SQLException;
 import java.util.Map;
 
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import static java.sql.Types.NULL;
+
 public class SqlDataAccess implements DataAccess {
 
     public SqlDataAccess() {
         configureDatabase();
     }
 
-    public void clearData() throws ResponseException {
-
+    public int clearData() throws ResponseException {
+        return 0;
     }
 
     public UserData getUser(String username) {
         return null;
     }
 
-    public void createUser(UserData userData) throws ResponseException {
-
+    public int createUser(UserData userData) throws ResponseException {
+        return 0;
     }
 
     public AuthData getAuth(String authToken) {
@@ -33,8 +37,8 @@ public class SqlDataAccess implements DataAccess {
         return "";
     }
 
-    public void removeAuth(String authToken) throws DataAccessException {
-
+    public int removeAuth(String authToken) throws DataAccessException {
+        return 0;
     }
 
     public int createGame(String gameName) {
@@ -49,8 +53,35 @@ public class SqlDataAccess implements DataAccess {
         return Map.of();
     }
 
-    public void updateGame(GameData gameData) throws DataAccessException {
+    public int updateGame(GameData gameData) throws DataAccessException {
+        return 0;
+    }
 
+    private int executeUpdate(String statement, Object... params) throws ResponseException {
+        try (var conn = DatabaseManager.getConnection()) {
+            try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
+                for (var i = 0; i < params.length; i++) {
+                    var param = params[i];
+                    switch (param) {
+                        case String p -> ps.setString(i + 1, p);
+                        case Integer p -> ps.setInt(i + 1, p);
+                        case GameData p -> ps.setString(i + 1, p.toString());
+                        case null -> ps.setNull(i + 1, NULL);
+                        default -> throw new ResponseException(500, "Param type incompatible: " + param);
+                    }
+                }
+                ps.executeUpdate();
+
+                var rs = ps.getGeneratedKeys();
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+
+                return 0;
+            }
+        } catch (SQLException e) {
+            throw new ResponseException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
     }
 
     private final String[] createStatements = {
@@ -87,7 +118,6 @@ public class SqlDataAccess implements DataAccess {
             )
             """
     };
-
 
     private void configureDatabase() {
         try {
