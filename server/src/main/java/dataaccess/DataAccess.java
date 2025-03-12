@@ -13,16 +13,16 @@ public interface DataAccess {
     /**
      * returns userData if user exists, otherwise null
      */
-    UserData getUser(String username);
+    UserData getUser(String username) throws ResponseException;
 
     /**
      * creates a new user if user isn't already in the database
      */
     int createUser(UserData userData) throws ResponseException;
 
-    AuthData getAuth(String authToken);
+    AuthData getAuth(String authToken) throws ResponseException;
 
-    String createAuth(String username);
+    String createAuth(String username) throws ResponseException;
 
     /**
      * removes an authToken from the database, throws an error if authToken doesn't exist
@@ -32,17 +32,17 @@ public interface DataAccess {
     /**
      * creates a new game given a username and a password, creating an ID using a PriorityQueue
      */
-    int createGame(String gameName);
+    int createGame(String gameName) throws ResponseException;
 
     /**
      * finds game by gameID
      */
-    GameData getGame(int gameID);
+    GameData getGame(int gameID) throws ResponseException;
 
     /**
      * returns the Map of games stored by ID
      */
-    Map<Integer, GameData> getGames();
+    Map<Integer, GameData> getGames() throws ResponseException;
 
     /**
      * replaces gameData by gameID
