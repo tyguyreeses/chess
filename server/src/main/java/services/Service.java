@@ -2,6 +2,8 @@ package services;
 
 import chess.ChessGame.TeamColor;
 import dataaccess.DataAccess;
+import dataaccess.MemoryDataAccess;
+import dataaccess.SqlDataAccess;
 import exception.ResponseException;
 import model.*;
 
@@ -9,11 +11,8 @@ import java.util.Collection;
 import java.util.Objects;
 
 public class Service {
-    public final DataAccess dataAccess;
 
-    public Service(DataAccess dataAccess) {
-        this.dataAccess = dataAccess;
-    }
+    public final DataAccess dataAccess = new SqlDataAccess();
 
     public void clearData() throws ResponseException {
         dataAccess.clearData();

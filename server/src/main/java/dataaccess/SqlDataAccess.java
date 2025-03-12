@@ -10,11 +10,7 @@ import java.util.Map;
 public class SqlDataAccess implements DataAccess {
 
     public SqlDataAccess() {
-        try {
-            configureDatabase();
-        } catch (ResponseException e) {
-            System.err.println("Error configuring database: " + e.getMessage());
-        }
+        configureDatabase();
     }
 
     public void clearData() throws ResponseException {
@@ -93,16 +89,20 @@ public class SqlDataAccess implements DataAccess {
     };
 
 
-    private void configureDatabase() throws ResponseException {
-        DatabaseManager.createDatabase();
-        try (var conn = DatabaseManager.getConnection()) {
-            for (var statement : createStatements) {
-                try (var preparedStatement = conn.prepareStatement(statement)) {
-                    preparedStatement.executeUpdate();
+    private void configureDatabase() {
+        try {
+            DatabaseManager.createDatabase();
+            try (var conn = DatabaseManager.getConnection()) {
+                for (var statement : createStatements) {
+                    try (var preparedStatement = conn.prepareStatement(statement)) {
+                        preparedStatement.executeUpdate();
+                    }
                 }
+            } catch (SQLException ex) {
+                throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
             }
-        } catch (SQLException ex) {
-            throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error configuring database: " + e.getMessage());
         }
     }
 }
