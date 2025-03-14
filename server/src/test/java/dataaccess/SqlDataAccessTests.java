@@ -77,6 +77,13 @@ public class SqlDataAccessTests {
     }
 
     @Test
+    public void testRegisterUserBadRequest() {
+        UserData newUser = new UserData("", "", null);
+        ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
+        assertEquals(400, ex.statusCode());
+    }
+
+    @Test
     public void testClearData() throws ResponseException {
         UserData newUser = new UserData("newUser", "123", "test@mail.com");
         db.createUser(newUser);
