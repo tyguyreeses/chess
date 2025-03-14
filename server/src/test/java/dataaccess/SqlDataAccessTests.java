@@ -69,10 +69,11 @@ public class SqlDataAccessTests {
     }
 
     @Test
-    public void testRegisterUserAlreadyTaken() {
+    public void testRegisterUserMultipleTimes() throws ResponseException {
         UserData newUser = new UserData("testuser", "123", "test@mail.com");
+        db.createUser(newUser);
         ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
-        assertEquals(400, ex.statusCode());
+        assertEquals(403, ex.statusCode());
     }
 
     @Test

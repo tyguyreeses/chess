@@ -69,17 +69,17 @@ public class SqlDataAccess implements DataAccess {
     }
 
     public int createUser(UserData ud) throws ResponseException {
+        // check if userData is valid
+        if (ud.username() == null || ud.password() == null || ud.email() == null) {
+            throw new ResponseException(400, "Error: unauthorized");
+        }
+        // check if username in database
+        if (getUser(ud.username()) != null) {
+            throw new ResponseException(403, "Error: already taken");
+        }
         try (var conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                // check if userData is valid
-                if (ud.username() == null || ud.password() == null || ud.email() == null) {
-                    throw new ResponseException(400, "Error: unauthorized");
-                }
-                // check if username in database
-                if (getUser(ud.username()) != null) {
-                    throw new ResponseException(403, "Error: already taken");
-                }
                 // add user into users
                 String statement1 = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
                 String password = BCrypt.hashpw(ud.password(), BCrypt.gensalt());
