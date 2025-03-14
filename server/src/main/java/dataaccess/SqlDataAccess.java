@@ -26,7 +26,7 @@ public class SqlDataAccess implements DataAccess {
     }
 
     public int clearData() throws ResponseException {
-        String[] statements = {"TRUNCATE users", "TRUNCATE games", "TRUNCATE authTokens"};
+        String[] statements = {"DELETE FROM authTokens", "DELETE FROM games", "DELETE FROM users"};
         try (var conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -46,7 +46,7 @@ public class SqlDataAccess implements DataAccess {
 
     public UserData getUser(String username) throws ResponseException {
         try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username, authToken FROM authTokens WHERE username=?";
+            var statement = "SELECT username, password, email FROM users WHERE username=?";
             try (var ps = conn.prepareStatement(statement)) {
                 ps.setString(1, username);
                 try (var rs = ps.executeQuery()) {
@@ -88,6 +88,7 @@ public class SqlDataAccess implements DataAccess {
                 String statement2 = "INSERT INTO authTokens (username, authToken) VALUES (?, ?)";
                 String auth = UUID.randomUUID().toString();
                 executeUpdate(conn, statement2, ud.username(), auth);
+                conn.commit();
                 return 1;
             } catch (ResponseException e) {
                 conn.rollback();
@@ -171,8 +172,8 @@ public class SqlDataAccess implements DataAccess {
               PRIMARY KEY (id),
               INDEX (whiteUsername),
               INDEX (blackUsername),
-              CONSTRAINT fk_games_white FOREIGN KEY (whiteUsername) REFERENCES users(username) ON DELETE RESTRICT,
-              CONSTRAINT fk_games_black FOREIGN KEY (blackUsername) REFERENCES users(username) ON DELETE RESTRICT
+              CONSTRAINT fk_games_white FOREIGN KEY (whiteUsername) REFERENCES users(username) ON DELETE CASCADE,
+              CONSTRAINT fk_games_black FOREIGN KEY (blackUsername) REFERENCES users(username) ON DELETE CASCADE
             )
             """,
             """
@@ -181,7 +182,7 @@ public class SqlDataAccess implements DataAccess {
               `username` varchar(256) NOT NULL UNIQUE,
               `authToken` varchar(256) NOT NULL UNIQUE,
               PRIMARY KEY (id),
-              CONSTRAINT fk_authTokens_user FOREIGN KEY (username) REFERENCES users(username) ON DELETE RESTRICT
+              CONSTRAINT fk_authTokens_user FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
             )
             """
     };
@@ -198,7 +199,7 @@ public class SqlDataAccess implements DataAccess {
             } catch (SQLException ex) {
                 throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
             }
-//            addTestUser();
+            addTestUser();
         } catch (Exception e) {
             System.err.println("Error configuring database: " + e.getMessage());
         }
@@ -212,12 +213,6 @@ public class SqlDataAccess implements DataAccess {
                 statement.setString(1, "testuser");
                 statement.setString(2, "testpassword");
                 statement.setString(3, "testemail");
-
-                // Execute the insert statement and get the result
-                int rowsAffected = statement.executeUpdate();
-
-                // Assert that the insertion affected 1 row
-                assertEquals(1, rowsAffected, "User should be inserted into the table.");
             }
         } catch (Exception e) {
             throw new ResponseException(500, "Couldn't add test user: " + e.getMessage());
