@@ -7,14 +7,17 @@ import dataaccess.SqlDataAccess;
 import exception.ResponseException;
 import model.*;
 import org.mindrot.jbcrypt.BCrypt;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
 public class Service {
 
-    public final DataAccess dataAccess = new MemoryDataAccess();
+    public final DataAccess dataAccess;
+
+    public Service(DataAccess dataAccess) {
+        this.dataAccess = dataAccess;
+    }
 
     public void clearData() throws ResponseException {
         dataAccess.clearData();

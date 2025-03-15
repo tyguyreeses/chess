@@ -19,9 +19,9 @@ class ServiceTests {
 
     @BeforeEach
     void setUp() throws ResponseException {
-        this.service = new Service();
+        this.dataAccess = new MemoryDataAccess();
+        this.service = new Service(dataAccess);
         service.clearData();
-        this.dataAccess = service.dataAccess;
     }
 
     @Test

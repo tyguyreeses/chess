@@ -245,24 +245,8 @@ public class SqlDataAccess implements DataAccess {
             } catch (SQLException ex) {
                 throw new ResponseException(500, String.format("Unable to configure database: %s", ex.getMessage()));
             }
-//            addTestUser();
         } catch (Exception e) {
             System.err.println("Error configuring database: " + e.getMessage());
         }
     }
-
-//    public void addTestUser() throws ResponseException {
-//        String insertUser = "INSERT IGNORE INTO users (username, password, email) VALUES (?, ?, ?)";
-//        try (Connection conn = DatabaseManager.getConnection()) {
-//            try (PreparedStatement statement = conn.prepareStatement(insertUser)) {
-//                // Set parameters for username and password
-//                statement.setString(1, "testUser");
-//                statement.setString(2, "testPassword");
-//                statement.setString(3, "testEmail");
-//                statement.executeUpdate();
-//            }
-//        } catch (Exception e) {
-//            throw new ResponseException(500, "Couldn't add test user: " + e.getMessage());
-//        }
-//    }
 }

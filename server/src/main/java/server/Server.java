@@ -2,6 +2,9 @@ package server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import dataaccess.DataAccess;
+import dataaccess.MemoryDataAccess;
+import dataaccess.SqlDataAccess;
 import exception.ResponseException;
 import handlers.JoinRequest;
 import model.*;
@@ -12,7 +15,8 @@ import java.util.Map;
 public class Server {
 
     Gson gson = new Gson();
-    public Service service = new Service();
+    public DataAccess dataAccess = new SqlDataAccess();
+    public Service service = new Service(dataAccess);
 
 
     public int run(int desiredPort) {
