@@ -8,8 +8,9 @@ import exception.ResponseException;
 import model.*;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
+import java.util.Map;
 
 public class Service {
 
@@ -29,7 +30,7 @@ public class Service {
     public AuthData loginUser(String username, String password) throws ResponseException {
         UserData userData = dataAccess.getUser(username);
         if (userData != null && BCrypt.checkpw(password, userData.password())) {
-            // return success response and an authToken
+            // return success response and an authToken if it doesn't exist
             String authToken = dataAccess.createAuth(userData.username());
             return new AuthData(authToken, username);
         } else {
@@ -50,7 +51,8 @@ public class Service {
 
     public Collection<GameData> listGames(String authToken) throws ResponseException {
         validateAuthData(authToken);
-        return dataAccess.getGames().values();
+        Map<Integer, GameData> games = dataAccess.getGames();
+        return games != null ? games.values() : new ArrayList<>();
     }
 
     public Integer createGame(String authToken, String gameName) throws ResponseException {

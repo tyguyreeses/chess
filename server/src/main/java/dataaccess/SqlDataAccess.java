@@ -226,10 +226,9 @@ public class SqlDataAccess implements DataAccess {
             """
             CREATE TABLE IF NOT EXISTS authTokens (
               `id` int NOT NULL AUTO_INCREMENT,
-              `username` varchar(256) NOT NULL UNIQUE,
-              `authToken` varchar(256) NOT NULL UNIQUE,
+              `username` varchar(256) NOT NULL,
+              `authToken` varchar(256) NOT NULL,
               PRIMARY KEY (id),
-              CONSTRAINT fk_authTokens_user FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
             )
             """
     };
