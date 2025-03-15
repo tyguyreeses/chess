@@ -228,7 +228,7 @@ public class SqlDataAccess implements DataAccess {
               `id` int NOT NULL AUTO_INCREMENT,
               `username` varchar(256) NOT NULL,
               `authToken` varchar(256) NOT NULL,
-              PRIMARY KEY (id),
+              PRIMARY KEY (id)
             )
             """
     };
