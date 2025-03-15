@@ -17,8 +17,10 @@ public interface DataAccess {
 
     /**
      * creates a new user if user isn't already in the database
+     *
+     * @return
      */
-    void createUser(UserData userData) throws ResponseException;
+    int createUser(UserData userData) throws ResponseException;
 
     AuthData getAuth(String authToken) throws ResponseException;
 
@@ -26,11 +28,13 @@ public interface DataAccess {
 
     /**
      * removes an authToken from the database, throws an error if authToken doesn't exist
+     *
+     * @return
      */
-    void removeAuth(String authToken) throws DataAccessException, ResponseException;
+    int removeAuth(String authToken) throws DataAccessException, ResponseException;
 
     /**
-     * creates a new game given a username and a password, creating an ID using a PriorityQueue
+     * creates a new game given a username and a password, returning a generated id
      */
     int createGame(String gameName) throws ResponseException;
 
