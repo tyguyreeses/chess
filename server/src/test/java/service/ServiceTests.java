@@ -7,7 +7,6 @@ import exception.ResponseException;
 import model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import server.Server;
 import services.Service;
 
 import java.util.Collection;
@@ -19,8 +18,9 @@ class ServiceTests {
     private DataAccess dataAccess;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws ResponseException {
         this.service = new Service();
+        service.clearData();
         this.dataAccess = service.dataAccess;
     }
 
@@ -113,7 +113,7 @@ class ServiceTests {
     void listGamesSuccess() throws ResponseException {
         UserData user = new UserData("testUser", "password", "email@test.com");
         AuthData auth = service.registerUser(user);
-        Integer gameId = service.createGame(auth.authToken(), "Chess Match");
+        service.createGame(auth.authToken(), "Chess Match");
         Collection<GameData> games = service.listGames(auth.authToken());
         assertFalse(games.isEmpty());
         assertEquals(1, games.size());
