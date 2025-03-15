@@ -6,6 +6,7 @@ import dataaccess.MemoryDataAccess;
 import dataaccess.SqlDataAccess;
 import exception.ResponseException;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -27,7 +28,7 @@ public class Service {
 
     public AuthData loginUser(String username, String password) throws ResponseException {
         UserData userData = dataAccess.getUser(username);
-        if (userData != null && Objects.equals(userData.password(), password)) {
+        if (userData != null && BCrypt.checkpw(password, userData.password())) {
             // return success response and an authToken
             String authToken = dataAccess.createAuth(userData.username());
             return new AuthData(authToken, username);
