@@ -34,7 +34,7 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * creates a new user if user isn't already in the database
      */
-    public void createUser(UserData userData) throws ResponseException {
+    public int createUser(UserData userData) throws ResponseException {
         if (userData.password() == null || userData.username() == null) {
             throw new ResponseException(400, "Error: unauthorized");
         }
@@ -42,6 +42,7 @@ public class MemoryDataAccess implements DataAccess {
             throw new ResponseException(403, "Error: already taken");
         }
         users.put(userData.username(), userData); // Adds the username and password
+        return 0;
     }
 
     public AuthData getAuth(String authToken){
@@ -58,11 +59,12 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * removes an authToken from the database, throws an error if authToken doesn't exist
      */
-    public void removeAuth(String authToken) throws DataAccessException {
+    public int removeAuth(String authToken) throws DataAccessException {
         if (getAuth(authToken) == null) {
             throw new DataAccessException("Error: AuthToken doesn't exist in the database");
         }
         authTokens.remove(authToken);
+        return 0;
     }
 
     private int nextId = 1;

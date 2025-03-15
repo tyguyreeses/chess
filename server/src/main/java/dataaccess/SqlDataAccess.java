@@ -37,7 +37,7 @@ public class SqlDataAccess implements DataAccess {
         return (UserData) retrieveData(statement, username, "userData");
     }
 
-    public void createUser(UserData ud) throws ResponseException {
+    public int createUser(UserData ud) throws ResponseException {
         // check if userData is valid
         if (ud.username() == null || ud.password() == null || ud.email() == null) {
             throw new ResponseException(400, "Error: unauthorized");
@@ -49,11 +49,11 @@ public class SqlDataAccess implements DataAccess {
         // add user into users, encrypting password before storage
         String statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
         String password = BCrypt.hashpw(ud.password(), BCrypt.gensalt());
-        executeUpdate(statement, ud.username(), password, ud.email());
+        return executeUpdate(statement, ud.username(), password, ud.email());
     }
 
     public AuthData getAuth(String authToken) throws ResponseException {
-        String statement = "SELECT username, authToken FROM users WHERE authToken=?";
+        String statement = "SELECT username, authToken FROM authTokens WHERE authToken=?";
         return (AuthData) retrieveData(statement, authToken, "authData");
     }
 
@@ -64,9 +64,9 @@ public class SqlDataAccess implements DataAccess {
         return auth;
     }
 
-    public void removeAuth(String authToken) throws ResponseException {
+    public int removeAuth(String authToken) throws ResponseException {
         String statement = "DELETE FROM authTokens WHERE authToken=?";
-        executeUpdate(statement, authToken);
+        return executeUpdate(statement, authToken);
     }
 
     public int createGame(String gameName) throws ResponseException {
@@ -76,7 +76,7 @@ public class SqlDataAccess implements DataAccess {
     }
 
     public GameData getGame(int gameID) throws ResponseException {
-        String statement = "SELECT * FROM games WHERE gameID=?";
+        String statement = "SELECT * FROM games WHERE id=?";
         return (GameData) retrieveData(statement, gameID, "gameData");
     }
 
@@ -88,13 +88,13 @@ public class SqlDataAccess implements DataAccess {
         return (Map<Integer, GameData>) retrieveData(statement, null, "gameMap");
     }
 
-    public void updateGame(GameData gameData) throws DataAccessException, ResponseException {
-        int id = gameData.gameID();
+    public void updateGame(GameData gd) throws DataAccessException, ResponseException {
+        int id = gd.gameID();
         if (getGame(id) == null) {
             throw new DataAccessException("Error: gameID doesn't exist in the database");
         }
-        String statement = "UPDATE games SET gameData = ? WHERE id = ?";
-        executeUpdate(statement, gameData, id);
+        String statement = "UPDATE games SET whiteUsername=?, blackUsername=?, gameName=?, chessGame=? WHERE id = ?";
+        executeUpdate(statement, gd.whiteUsername(), gd.blackUsername(), gd.gameName(), gd.game(), id);
     }
 
     private Object retrieveData(String statement, Object param, String expected) throws ResponseException {
@@ -131,7 +131,7 @@ public class SqlDataAccess implements DataAccess {
     private AuthData readAuthData(ResultSet rs) throws SQLException {
         String username = rs.getString("username");
         String authToken = rs.getString("authToken");
-        return new AuthData(username, authToken);
+        return new AuthData(authToken, username);
     }
 
     /**
@@ -172,7 +172,7 @@ public class SqlDataAccess implements DataAccess {
                     switch (param) {
                         case String p -> ps.setString(i + 1, p);
                         case Integer p -> ps.setInt(i + 1, p);
-                        case GameData p -> ps.setString(i + 1, gson.toJson(p));
+                        case ChessGame p -> ps.setString(i + 1, gson.toJson(p));
                         case null -> ps.setNull(i + 1, NULL);
                         default -> throw new ResponseException(500, "Param type incompatible: " + param);
                     }
@@ -260,6 +260,7 @@ public class SqlDataAccess implements DataAccess {
                 statement.setString(1, "testUser");
                 statement.setString(2, "testPassword");
                 statement.setString(3, "testEmail");
+                statement.executeUpdate();
             }
         } catch (Exception e) {
             throw new ResponseException(500, "Couldn't add test user: " + e.getMessage());
