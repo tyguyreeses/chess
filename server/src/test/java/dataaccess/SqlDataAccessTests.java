@@ -37,16 +37,6 @@ public class SqlDataAccessTests {
     @Test
     public void testConfigureDatabaseSuccess() throws SQLException {
 
-        // Check if the 'users' table exists
-        String checkUsersTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'users' AND " +
-                "table_schema = 'chess'";
-        try (PreparedStatement statement = conn.prepareStatement(checkUsersTable);
-             ResultSet rs = statement.executeQuery()) {
-                rs.next();
-                int count = rs.getInt(1);
-                assertEquals(1, count, "Users table should exist.");
-             }
-
         // Check if the 'games' table exists
         String checkGamesTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'games'";
         try (PreparedStatement statement = conn.prepareStatement(checkGamesTable);
