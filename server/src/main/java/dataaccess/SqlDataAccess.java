@@ -1,23 +1,23 @@
 package dataaccess;
 
 import chess.ChessGame;
-import com.google.gson.Gson;
 import exception.ResponseException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.google.gson.Gson;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.UUID;
-
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class SqlDataAccess implements DataAccess {
 
@@ -25,50 +25,19 @@ public class SqlDataAccess implements DataAccess {
         configureDatabase();
     }
 
-    public int clearData() throws ResponseException {
+    public void clearData() throws ResponseException {
         String[] statements = {"DELETE FROM authTokens", "DELETE FROM games", "DELETE FROM users"};
-        try (var conn = DatabaseManager.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                for (String statement : statements) {
-                    executeUpdate(conn, statement);
-                }
-                conn.commit();
-                return 1;
-            } catch (ResponseException e) {
-                conn.rollback();
-            }
-        } catch (SQLException e) {
-            throw new ResponseException(500, e.getMessage());
+        for (String statement : statements) {
+            executeUpdate(statement);
         }
-        return 0;
     }
 
     public UserData getUser(String username) throws ResponseException {
-        try (var conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT username, password, email FROM users WHERE username=?";
-            try (var ps = conn.prepareStatement(statement)) {
-                ps.setString(1, username);
-                try (var rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return readUserData(rs);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new ResponseException(500, String.format("Unable to read data: %s", e.getMessage()));
-        }
-        return null;
+        String statement = "SELECT username, password, email FROM users WHERE username=?";
+        return (UserData) retrieveData(statement, username, "userData");
     }
 
-    private UserData readUserData(ResultSet rs) throws SQLException {
-        var username = rs.getString("username");
-        var password = rs.getString("password");
-        var email = rs.getString("email");
-        return new UserData(username, password, email);
-    }
-
-    public int createUser(UserData ud) throws ResponseException {
+    public void createUser(UserData ud) throws ResponseException {
         // check if userData is valid
         if (ud.username() == null || ud.password() == null || ud.email() == null) {
             throw new ResponseException(400, "Error: unauthorized");
@@ -77,79 +46,152 @@ public class SqlDataAccess implements DataAccess {
         if (getUser(ud.username()) != null) {
             throw new ResponseException(403, "Error: already taken");
         }
-        try (var conn = DatabaseManager.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                // add user into users
-                String statement1 = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-                String password = BCrypt.hashpw(ud.password(), BCrypt.gensalt());
-                executeUpdate(conn, statement1, ud.username(), password, ud.email());
-                // create authToken and add to authTokens
-                String statement2 = "INSERT INTO authTokens (username, authToken) VALUES (?, ?)";
-                String auth = UUID.randomUUID().toString();
-                executeUpdate(conn, statement2, ud.username(), auth);
-                conn.commit();
-                return 1;
-            } catch (ResponseException e) {
-                conn.rollback();
-                throw new ResponseException(500, e.getMessage());
-            }
-        }  catch (SQLException e) {
-            throw new ResponseException(500, e.getMessage());
+        // add user into users, encrypting password before storage
+        String statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
+        String password = BCrypt.hashpw(ud.password(), BCrypt.gensalt());
+        executeUpdate(statement, ud.username(), password, ud.email());
+    }
+
+    public AuthData getAuth(String authToken) throws ResponseException {
+        String statement = "SELECT username, authToken FROM users WHERE authToken=?";
+        return (AuthData) retrieveData(statement, authToken, "authData");
+    }
+
+    public String createAuth(String username) throws ResponseException {
+        String statement = "INSERT INTO authTokens (username, authToken) VALUES (?, ?)";
+        String auth = UUID.randomUUID().toString();
+        executeUpdate(statement, username, auth);
+        return auth;
+    }
+
+    public void removeAuth(String authToken) throws ResponseException {
+        String statement = "DELETE FROM authTokens WHERE authToken=?";
+        executeUpdate(statement, authToken);
+    }
+
+    public int createGame(String gameName) throws ResponseException {
+        String insertStatement  = "INSERT INTO games (gameName, chessGame) VALUES (?, ?)";
+        ChessGame chessGame = new ChessGame();
+        return executeUpdate(insertStatement, gameName, chessGame);
+    }
+
+    public GameData getGame(int gameID) throws ResponseException {
+        String statement = "SELECT * FROM games WHERE gameID=?";
+        return (GameData) retrieveData(statement, gameID, "gameData");
+    }
+
+    // suppress the unchecked warning since retrieveData will only
+    // return a Map with the specific expected parameter
+    @SuppressWarnings("unchecked")
+    public Map<Integer, GameData> getGames() throws ResponseException {
+        String statement = "SELECT * FROM games";
+        return (Map<Integer, GameData>) retrieveData(statement, null, "gameMap");
+    }
+
+    public void updateGame(GameData gameData) throws DataAccessException, ResponseException {
+        int id = gameData.gameID();
+        if (getGame(id) == null) {
+            throw new DataAccessException("Error: gameID doesn't exist in the database");
         }
+        String statement = "UPDATE games SET gameData = ? WHERE id = ?";
+        executeUpdate(statement, gameData, id);
     }
 
-    public AuthData getAuth(String authToken) {
+    private Object retrieveData(String statement, Object param, String expected) throws ResponseException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                if (param != null) switch (param) {
+                    case String p -> ps.setString(1, p);
+                    case Integer p -> ps.setInt(1, p);
+                    default -> throw new ResponseException(500, "Param type incompatible: " + param);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return readData(rs, expected);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new ResponseException(500, String.format("Unable to retrieve data: %s", e.getMessage()));
+        }
         return null;
     }
 
-    public String createAuth(String username) {
-        return "";
+    private Object readData(ResultSet rs, String expected) throws SQLException {
+        return switch (expected) {
+            case "userData" -> readUserData(rs);
+            case "authData" -> readAuthData(rs);
+            case "gameData" -> readGameData(rs);
+            case "gameMap" -> readGameMap(rs);
+            case null, default -> null;
+        };
     }
 
-    public int removeAuth(String authToken) throws DataAccessException {
-        return 0;
+    private AuthData readAuthData(ResultSet rs) throws SQLException {
+        String username = rs.getString("username");
+        String authToken = rs.getString("authToken");
+        return new AuthData(username, authToken);
     }
 
-    public int createGame(String gameName) {
-        return 0;
+    /**
+     * returns user data without decrypting password
+     */
+    private UserData readUserData(ResultSet rs) throws SQLException {
+        String username = rs.getString("username");
+        String password = rs.getString("password");
+        String email = rs.getString("email");
+        return new UserData(username, password, email);
     }
 
-    public GameData getGame(int gameID) {
-        return null;
+    private GameData readGameData(ResultSet rs) throws SQLException {
+        Gson gson = new Gson();
+        int id = rs.getInt("id");
+        String wu = rs.getString("whiteUsername");
+        String bu = rs.getString("blackUsername");
+        String gn = rs.getString("gameName");
+        ChessGame cg = gson.fromJson(rs.getString("chessGame"), ChessGame.class);
+        return new GameData(id, wu, bu, gn, cg);
     }
 
-    public Map<Integer, GameData> getGames() {
-        return Map.of();
+    private Map<Integer, GameData> readGameMap (ResultSet rs) throws SQLException {
+        Map<Integer, GameData> gameMap = new HashMap<>();
+        do {
+            int id = rs.getInt("id");
+            gameMap.put(id, readGameData(rs));
+        } while (rs.next());
+        return gameMap;
     }
 
-    public int updateGame(GameData gameData) throws DataAccessException {
-        return 0;
-    }
-
-    private int executeUpdate(Connection conn, String statement, Object... params) throws ResponseException {
-            try (var ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-                for (var i = 0; i < params.length; i++) {
-                    var param = params[i];
+    private int executeUpdate(String statement, Object... params) throws ResponseException {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
+                Gson gson = new Gson(); // for converting GameData to json
+                for (int i = 0; i < params.length; i++) {
+                    Object param = params[i];
                     switch (param) {
                         case String p -> ps.setString(i + 1, p);
                         case Integer p -> ps.setInt(i + 1, p);
-                        case GameData p -> ps.setString(i + 1, p.toString());
+                        case GameData p -> ps.setString(i + 1, gson.toJson(p));
                         case null -> ps.setNull(i + 1, NULL);
                         default -> throw new ResponseException(500, "Param type incompatible: " + param);
                     }
                 }
-                ps.executeUpdate();
-
-                var rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    return rs.getInt(1);
+                // calculate affected rows
+                int affectedRows = ps.executeUpdate();
+                // if INSERT, return generated id
+                if (statement.trim().toUpperCase().startsWith("INSERT")) {
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            return rs.getInt(1);
+                        }
+                    }
                 }
-
-                return 0;
-            } catch (SQLException e) {
-                throw new ResponseException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+                // otherwise just return affected rows
+                return affectedRows;
             }
+        } catch (SQLException e) {
+            throw new ResponseException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
+        }
     }
 
     private final String[] createStatements = {
@@ -165,8 +207,8 @@ public class SqlDataAccess implements DataAccess {
             """
             CREATE TABLE IF NOT EXISTS games (
               `id` int NOT NULL AUTO_INCREMENT,
-              `whiteUsername` varchar(256) NOT NULL,
-              `blackUsername` varchar(256) NOT NULL,
+              `whiteUsername` varchar(256),
+              `blackUsername` varchar(256),
               `gameName` varchar(256) NOT NULL,
               `chessGame` text NOT NULL,
               PRIMARY KEY (id),
@@ -190,10 +232,10 @@ public class SqlDataAccess implements DataAccess {
     private void configureDatabase() {
         try {
             DatabaseManager.createDatabase();
-            try (var conn = DatabaseManager.getConnection()) {
-                for (var statement : createStatements) {
-                    try (var preparedStatement = conn.prepareStatement(statement)) {
-                        preparedStatement.executeUpdate();
+            try (Connection conn = DatabaseManager.getConnection()) {
+                for (String statement : createStatements) {
+                    try (PreparedStatement ps = conn.prepareStatement(statement)) {
+                        ps.executeUpdate();
                     }
                 }
             } catch (SQLException ex) {
@@ -207,12 +249,12 @@ public class SqlDataAccess implements DataAccess {
 
     public void addTestUser() throws ResponseException {
         String insertUser = "INSERT IGNORE INTO users (username, password, email) VALUES (?, ?, ?)";
-        try (var conn = DatabaseManager.getConnection()) {
+        try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement statement = conn.prepareStatement(insertUser)) {
                 // Set parameters for username and password
-                statement.setString(1, "testuser");
-                statement.setString(2, "testpassword");
-                statement.setString(3, "testemail");
+                statement.setString(1, "testUser");
+                statement.setString(2, "testPassword");
+                statement.setString(3, "testEmail");
             }
         } catch (Exception e) {
             throw new ResponseException(500, "Couldn't add test user: " + e.getMessage());
