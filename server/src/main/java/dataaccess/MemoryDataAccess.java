@@ -5,6 +5,7 @@ import java.util.*;
 import chess.ChessGame;
 import exception.ResponseException;
 import model.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class MemoryDataAccess implements DataAccess {
     public final Map<String, UserData> users = new HashMap<>(); // simulates a database with username: UserData
@@ -41,7 +42,9 @@ public class MemoryDataAccess implements DataAccess {
         if (getUser(userData.username()) != null) {
             throw new ResponseException(403, "Error: already taken");
         }
-        users.put(userData.username(), userData); // Adds the username and password
+        String password = BCrypt.hashpw(userData.password(), BCrypt.gensalt());
+        UserData updatedUD = new UserData(userData.username(), password, userData.email());
+        users.put(updatedUD.username(), updatedUD); // Adds the username and password
         return 0;
     }
 

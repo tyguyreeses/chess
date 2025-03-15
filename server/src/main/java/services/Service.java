@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class Service {
 
-    public final DataAccess dataAccess = new MemoryDataAccess();
+    public final DataAccess dataAccess = new SqlDataAccess();
 
     public void clearData() throws ResponseException {
         dataAccess.clearData();
