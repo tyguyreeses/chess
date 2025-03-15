@@ -100,10 +100,11 @@ public class SqlDataAccess implements DataAccess {
     private Object retrieveData(String statement, Object param, String expected) throws ResponseException {
         try (Connection conn = DatabaseManager.getConnection()) {
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
-                if (param != null) switch (param) {
+                if (param != null) { switch (param) {
                     case String p -> ps.setString(1, p);
                     case Integer p -> ps.setInt(1, p);
                     default -> throw new ResponseException(500, "Param type incompatible: " + param);
+                }
                 }
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -176,22 +177,26 @@ public class SqlDataAccess implements DataAccess {
                         default -> throw new ResponseException(500, "Param type incompatible: " + param);
                     }
                 }
-                // calculate affected rows
-                int affectedRows = ps.executeUpdate();
-                // if INSERT, return generated id
-                if (statement.trim().toUpperCase().startsWith("INSERT")) {
-                    try (ResultSet rs = ps.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            return rs.getInt(1);
-                        }
-                    }
-                }
-                // otherwise just return affected rows
-                return affectedRows;
+                return rowsOrID(ps, statement);
             }
         } catch (SQLException e) {
             throw new ResponseException(500, String.format("unable to update database: %s, %s", statement, e.getMessage()));
         }
+    }
+
+    private int rowsOrID(PreparedStatement ps, String statement) throws SQLException {
+        // calculate affected rows
+        int affectedRows = ps.executeUpdate();
+        // if INSERT, return generated id
+        if (statement.trim().toUpperCase().startsWith("INSERT")) {
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        // otherwise just return affected rows
+        return affectedRows;
     }
 
     private final String[] createStatements = {
