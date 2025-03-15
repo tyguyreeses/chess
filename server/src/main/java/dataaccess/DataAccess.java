@@ -8,7 +8,7 @@ import model.UserData;
 import java.util.*;
 
 public interface DataAccess {
-    int clearData() throws ResponseException;
+    void clearData() throws ResponseException;
 
     /**
      * returns userData if user exists, otherwise null
@@ -18,7 +18,7 @@ public interface DataAccess {
     /**
      * creates a new user if user isn't already in the database
      */
-    int createUser(UserData userData) throws ResponseException;
+    void createUser(UserData userData) throws ResponseException;
 
     AuthData getAuth(String authToken) throws ResponseException;
 
@@ -27,7 +27,7 @@ public interface DataAccess {
     /**
      * removes an authToken from the database, throws an error if authToken doesn't exist
      */
-    int removeAuth(String authToken) throws DataAccessException;
+    void removeAuth(String authToken) throws DataAccessException, ResponseException;
 
     /**
      * creates a new game given a username and a password, creating an ID using a PriorityQueue
@@ -47,6 +47,6 @@ public interface DataAccess {
     /**
      * replaces gameData by gameID
      */
-    int updateGame(GameData gameData) throws DataAccessException;
+    void updateGame(GameData gameData) throws DataAccessException, ResponseException;
 
 }

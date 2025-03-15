@@ -14,7 +14,7 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * resets all stored data
      */
-    public int clearData() throws ResponseException {
+    public void clearData() throws ResponseException {
         try {
             users.clear();
             authTokens.clear();
@@ -22,7 +22,6 @@ public class MemoryDataAccess implements DataAccess {
         } catch (Exception e) {
             throw new ResponseException(500, e.getMessage());
         }
-        return 1;
     }
 
     /**
@@ -35,7 +34,7 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * creates a new user if user isn't already in the database
      */
-    public int createUser(UserData userData) throws ResponseException {
+    public void createUser(UserData userData) throws ResponseException {
         if (userData.password() == null || userData.username() == null) {
             throw new ResponseException(400, "Error: unauthorized");
         }
@@ -43,7 +42,6 @@ public class MemoryDataAccess implements DataAccess {
             throw new ResponseException(403, "Error: already taken");
         }
         users.put(userData.username(), userData); // Adds the username and password
-        return 1;
     }
 
     public AuthData getAuth(String authToken){
@@ -60,12 +58,11 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * removes an authToken from the database, throws an error if authToken doesn't exist
      */
-    public int removeAuth(String authToken) throws DataAccessException {
+    public void removeAuth(String authToken) throws DataAccessException {
         if (getAuth(authToken) == null) {
             throw new DataAccessException("Error: AuthToken doesn't exist in the database");
         }
         authTokens.remove(authToken);
-        return 1;
     }
 
     private int nextId = 1;
@@ -102,13 +99,12 @@ public class MemoryDataAccess implements DataAccess {
     /**
      * replaces gameData by gameID
      */
-    public int updateGame(GameData gameData) throws DataAccessException {
+    public void updateGame(GameData gameData) throws DataAccessException {
         int gameID = gameData.gameID();
         if (getGame(gameID) == null) {
             throw new DataAccessException("Error: gameID doesn't exist in the database");
         }
         games.replace(gameID, gameData);
-        return 1;
     }
 
 }
