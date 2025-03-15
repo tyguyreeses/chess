@@ -1,11 +1,14 @@
 package dataaccess;
 
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.InvalidMoveException;
 import exception.ResponseException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.*;
-
 import java.sql.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +35,7 @@ public class SqlDataAccessTests {
     }
 
     @Test
-    public void testConfigureDatabaseSuccess() throws SQLException, ResponseException {
+    public void testConfigureDatabaseSuccess() throws SQLException {
 
         // Check if the 'users' table exists
         String checkUsersTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'users' AND " +
@@ -76,15 +79,28 @@ public class SqlDataAccessTests {
         }
 
         @Test
-        public void testRegisterUserMultipleTimes() throws ResponseException {
+        public void testRegisterUserMultipleTimes() {
             UserData newUser = new UserData("testuser", "123", "test@mail.com");
             ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
             assertEquals(403, ex.statusCode());
         }
 
         @Test
-        public void testRegisterUserBadRequest() {
-            UserData newUser = new UserData("", "", null);
+        public void testRegisterUserBadUsername() {
+            UserData newUser = new UserData(null, "valid", "valid");
+            ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
+            assertEquals(400, ex.statusCode());
+        }
+        @Test
+        public void testRegisterUserInvalidEmail() {
+            UserData newUser = new UserData("invalidEmailUser", "password123", null);
+            ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
+            assertEquals(400, ex.statusCode());
+        }
+
+        @Test
+        public void testRegisterUserInvalidPassword() {
+            UserData newUser = new UserData("invalidEmailUser", null, "valid");
             ResponseException ex = assertThrows(ResponseException.class, () -> db.createUser(newUser));
             assertEquals(400, ex.statusCode());
         }
@@ -126,6 +142,83 @@ public class SqlDataAccessTests {
             AuthData authData = new AuthData(auth, "authTest");
             assertEquals(authData, db.getAuth(auth));
         }
+
+        @Test
+        public void testRemoveAuth() throws ResponseException {
+            UserData ud = new UserData("authTest", "authPassword", "auth@mail.com");
+            db.createUser(ud);
+            String auth = db.createAuth("authTest");
+            db.removeAuth(auth);
+            assertNull(db.getAuth(auth));
+        }
+
+        @Test
+        public void testRemoveAuthNotExist() throws ResponseException {
+            assertEquals(0, db.removeAuth("invalidToken"));
+        }
+
+        @Test
+        public void testAuthInvalidToken() throws ResponseException {
+            assertNull(db.getAuth("invalidToken"));
+        }
+    }
+
+    @Nested
+    class GameTests {
+        @Test
+        public void testCreateGameSuccess() throws ResponseException {
+            int id = db.createGame("name");
+            assertNotNull(db.getGame(id));
+        }
+
+        @Test
+        public void testCreateGameInvalidID() throws ResponseException {
+            assertNull(db.getGame(-1));
+        }
+
+        @Test
+        public void testAddAndGetMultipleGames() throws ResponseException {
+            db.createGame("1");
+            int id2 = db.createGame("2");
+            int id3 = db.createGame("3");
+            assertEquals(3, db.getGames().size());
+            assertNotNull(db.getGame(id2));
+            assertNotNull(db.getGame(id3));
+        }
+        @Test
+        public void testListGamesNoGames() throws ResponseException {
+            assertNull(db.getGames());
+        }
+        @Test
+        public void testUpdateGame() throws ResponseException, InvalidMoveException, DataAccessException {
+            int id = db.createGame("name");
+            ChessMove move = new ChessMove(new ChessPosition(2,2),new ChessPosition(4,2),null);
+            ChessGame game = new ChessGame();
+            game.makeMove(move);
+            GameData gd = new GameData(id, null, null, "name", game);
+            db.updateGame(gd);
+            assertEquals(db.getGame(id).game(), game);
+        }
+        @Test
+        public void testUpdateGameWithNullValues() throws ResponseException, InvalidMoveException, DataAccessException {
+            int id = db.createGame("name");
+            ChessMove move = new ChessMove(new ChessPosition(2, 2), new ChessPosition(4, 2), null);
+            ChessGame game = new ChessGame();
+            game.makeMove(move);
+            GameData gd = new GameData(id, null, null, "name", game);  // Null for game name
+            db.updateGame(gd);
+            GameData updatedGame = db.getGame(id);
+            assertEquals("name", updatedGame.gameName());
+            assertEquals(updatedGame.game(), game);
+        }
+        @Test
+        public void testUpdateGameNoChange() throws ResponseException, DataAccessException {
+            int id = db.createGame("name");
+            ChessGame game = new ChessGame();
+            GameData gd = new GameData(id, null, null, "name", game);
+            db.updateGame(gd);
+            assertEquals(db.getGame(id).game(), game);
+        }
     }
 
     @Test
@@ -135,6 +228,18 @@ public class SqlDataAccessTests {
         assertNotNull(db.getUser("newUser"));
         db.clearData();
         assertNull(db.getUser("newUser"));
+    }
+
+    @Test
+    public void testGamesTableExistsAfterClear() throws SQLException, ResponseException {
+        db.clearData();
+        String checkGamesTable = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'games'";
+        try (PreparedStatement statement = conn.prepareStatement(checkGamesTable);
+             ResultSet rs = statement.executeQuery()) {
+            rs.next();
+            int count = rs.getInt(1);
+            assertEquals(1, count, "Games table should exist after clearing data.");
+        }
     }
 }
 
