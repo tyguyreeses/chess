@@ -14,7 +14,9 @@ public class ServerFacade {
 
     final String serverUrl;
 
-    public ServerFacade(int port) { serverUrl = "http://localhost:" + port; }
+    public ServerFacade(int port) {
+        serverUrl = "http://localhost:" + port;
+    }
 
     public void clearData() throws ResponseException {
         var path = "/db";
