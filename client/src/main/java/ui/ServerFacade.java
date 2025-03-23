@@ -1,5 +1,6 @@
 package ui;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import exception.ResponseException;
@@ -8,7 +9,7 @@ import model.*;
 import java.io.*;
 import java.net.*;
 import java.util.Collection;
-import java.util.List;
+import java.util.stream.Collectors;
 
 public class ServerFacade {
 
@@ -50,14 +51,14 @@ public class ServerFacade {
 
     public Collection<GameData> listGames(String authToken) throws ResponseException {
         var path = "/game";
-        GameData[] gameArray = this.makeRequest("GET", path, null, GameData[].class, authToken);
-        return List.of(gameArray);
+        ListGamesResponse games = this.makeRequest("GET", path, null, ListGamesResponse.class, authToken);
+        return games.games();
     }
 
-    public void joinGame(String authToken, String playerColor, int gameID) throws ResponseException {
+    public void joinGame(String authToken, ChessGame.TeamColor playerColor, int gameID) throws ResponseException {
         var path = "/game";
         JsonObject requestBody = new JsonObject();
-        requestBody.addProperty("playerColor", playerColor);
+        requestBody.addProperty("playerColor", playerColor.toString());
         requestBody.addProperty("gameID", gameID);
 
         this.makeRequest("PUT", path, requestBody, null, authToken);
