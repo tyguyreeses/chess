@@ -1,5 +1,6 @@
 package ui.repls;
 
+import model.AuthData;
 import ui.ServerFacade;
 import ui.clients.PreLoginClient;
 
@@ -9,9 +10,8 @@ import static ui.EscapeSequences.*;
 public class PreLoginRepl {
     private final PreLoginClient client;
 
-    public PreLoginRepl(int port) {
-        client = new PreLoginClient(port);
-        System.out.println("Started test HTTP server on " + port);
+    public PreLoginRepl(ServerFacade serverFacade) {
+        client = new PreLoginClient(serverFacade);
     }
 
     public void run() {
@@ -19,13 +19,16 @@ public class PreLoginRepl {
         System.out.print(client.help());
 
         Scanner scanner = new Scanner(System.in);
-        var result = "";
+        Object result = "";
         while (!result.equals("quit")) {
             printPrompt();
             String line = scanner.nextLine();
 
             try {
                 result = client.eval(line);
+                if (result instanceof AuthData) {
+
+                }
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
                 var msg = e.toString();
@@ -36,7 +39,7 @@ public class PreLoginRepl {
     }
 
     private void printPrompt() {
-        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
+        System.out.print("\n" + RESET_TEXT_COLOR + "Chess Login >>> " + SET_TEXT_COLOR_GREEN);
     }
 }
 
