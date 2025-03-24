@@ -11,18 +11,20 @@ import static ui.EscapeSequences.SET_TEXT_COLOR_GREEN;
 
 public class PostLoginRepl {
         private final PostLoginClient client;
+        private final AuthData authData;
 
         public PostLoginRepl(ServerFacade serverFacade, AuthData authData) {
             client = new PostLoginClient(serverFacade, authData);
+            this.authData = authData;
         }
 
         public void run() {
             System.out.println();
-            System.out.print(client.help());
+            System.out.print(String.format("Successfully logged in as &s", authData.username()));
 
             Scanner scanner = new Scanner(System.in);
-            var result = "";
-            while (!result.equals("quit")) {
+            String result = "";
+            while (!result.equals("logout")) {
                 printPrompt();
                 String line = scanner.nextLine();
 

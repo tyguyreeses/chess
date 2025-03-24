@@ -74,6 +74,11 @@ public class PostLoginClient {
         throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
     }
 
+    public String logout() throws ResponseException {
+        facade.logoutUser(authData.authToken());
+        return "logout";
+    }
+
     public String help() {
         return """
                 Options:
