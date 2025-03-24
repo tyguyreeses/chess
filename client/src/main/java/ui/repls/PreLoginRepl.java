@@ -9,9 +9,11 @@ import static ui.EscapeSequences.*;
 
 public class PreLoginRepl {
     private final PreLoginClient client;
+    private final ServerFacade facade;
 
     public PreLoginRepl(ServerFacade serverFacade) {
         client = new PreLoginClient(serverFacade);
+        facade = serverFacade;
     }
 
     public void run() {
@@ -27,7 +29,7 @@ public class PreLoginRepl {
             try {
                 result = client.eval(line);
                 if (result instanceof AuthData) {
-
+                    new PostLoginRepl(facade, (AuthData) result).run();
                 }
                 System.out.print(SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
