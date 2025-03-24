@@ -1,5 +1,6 @@
 package ui.repls;
 
+import model.*;
 import ui.ServerFacade;
 import ui.clients.PostLoginClient;
 
@@ -11,8 +12,8 @@ import static ui.EscapeSequences.SET_TEXT_COLOR_GREEN;
 public class PostLoginRepl {
         private final PostLoginClient client;
 
-        public PostLoginRepl(ServerFacade serverFacade) {
-            client = new PostLoginClient(serverFacade);
+        public PostLoginRepl(ServerFacade serverFacade, AuthData authData) {
+            client = new PostLoginClient(serverFacade, authData);
         }
 
         public void run() {
