@@ -1,19 +1,20 @@
 package ui.clients;
 
+import chess.ChessGame.TeamColor;
 import exception.ResponseException;
-import model.UserData;
+import model.*;
 import ui.ServerFacade;
 
 import java.util.Arrays;
 
 public class PostLoginClient {
     private final ServerFacade facade;
-    private final String username;
+    private final AuthData authData;
 
 
-    public PostLoginClient(ServerFacade serverFacade, String username) {
+    public PostLoginClient(ServerFacade serverFacade, AuthData authData) {
         this.facade = serverFacade;
-        this.username = username;
+        this.authData = authData;
 
     }
 
@@ -36,15 +37,41 @@ public class PostLoginClient {
     }
 
     public String list() throws ResponseException {
-            return facade.listGames();
+            return facade.listGames(authData.authToken()).toString();
     }
 
     public String create(String... params) throws ResponseException {
-        if (params.length == 3) {
-            facade.registerUser(new UserData(params[0], params[1], params[2]));
-            return String.format("Signed in as %s", params[0]);
+        if (params.length == 1) {
+            int gameID = facade.createGame(authData.authToken(), params[0]);
+            return String.format("Created game %s, ID = %d", params[0] ,gameID);
         }
-        throw new ResponseException(400, "Expected format: <USERNAME> <PASSWORD> <EMAIL>");
+        throw new ResponseException(400, "Expected format: <GAME NAME>");
+    }
+
+    public String join(String... params) throws ResponseException {
+        if (params.length == 2) {
+            TeamColor color = params[1].equalsIgnoreCase("white") ? TeamColor.WHITE : TeamColor.BLACK;
+            try {
+                int gameID = Integer.parseInt(params[0]);
+                facade.joinGame(authData.authToken(), color, gameID);
+                return String.format("Joined game with ID = %d", gameID);
+            } catch (NumberFormatException e) {
+                throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+            }
+        }
+        throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+    }
+
+    public String watch(String... params) throws ResponseException {
+        if (params.length == 1) {
+            try {
+                int gameID = Integer.parseInt(params[0]);
+                return String.format("Join game unimplemented, but format is correct: ID = %d", gameID);
+            } catch (NumberFormatException e) {
+                throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+            }
+        }
+        throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
     }
 
     public String help() {
