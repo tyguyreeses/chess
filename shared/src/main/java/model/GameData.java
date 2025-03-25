@@ -16,4 +16,8 @@ public record GameData(int gameID, String whiteUsername, String blackUsername, S
     public GameData withBlackUser(String username) {
         return new GameData(gameID, whiteUsername, username, gameName, game);
     }
+    @Override
+    public String toString() {
+        return String.format("%d. Game Name: %s\tWhite: %s\tBlack: %s", gameID, gameName, whiteUsername, blackUsername);
+    }
 }
