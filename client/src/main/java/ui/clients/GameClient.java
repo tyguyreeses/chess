@@ -5,7 +5,7 @@ import exception.ResponseException;
 import model.*;
 import ui.BoardPrinter;
 
-import java.util.Arrays;
+// import java.util.Arrays;
 
 public class GameClient {
     private final GameData gameData;
@@ -18,9 +18,9 @@ public class GameClient {
 
     public Object eval(String input) {
         try {
-            var tokens = input.split(" ");
-            var cmd = (tokens.length > 0) ? tokens[0] : "help";
-            var params = Arrays.copyOfRange(tokens, 1, tokens.length);
+            String[] tokens = input.split(" ");
+            String cmd = (tokens.length > 0) ? tokens[0] : "help";
+//            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd.toLowerCase()) {
                 case "r", "redraw" -> drawBoard(color);
                 case "leave" -> "leave";
