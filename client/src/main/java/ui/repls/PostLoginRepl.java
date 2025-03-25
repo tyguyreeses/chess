@@ -1,5 +1,6 @@
 package ui.repls;
 
+import chess.ChessGame;
 import model.*;
 import ui.ServerFacade;
 import ui.clients.PostLoginClient;
@@ -28,7 +29,11 @@ public class PostLoginRepl {
 
                 try {
                     result = client.eval(line);
-                    System.out.print(SET_TEXT_COLOR_BLUE + result);
+                    if (result instanceof ChessGame.TeamColor) {
+                        new GameRepl((ChessGame.TeamColor) result).run();
+                    } else {
+                        System.out.print(SET_TEXT_COLOR_BLUE + result);
+                    }
                 } catch (Throwable e) {
                     var msg = e.toString();
                     System.out.print(SET_TEXT_COLOR_RED + msg);
