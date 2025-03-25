@@ -22,9 +22,8 @@ public class GameClient {
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
             var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd.toLowerCase()) {
-                case "l", "login" -> help();
-                case "q", "quit" -> help();
-                case "r", "redraw" -> drawBoard();
+                case "r", "redraw" -> drawBoard(color);
+                case "leave" -> "leave";
                 default -> help();
             };
         } catch (ResponseException ex) {
@@ -32,9 +31,9 @@ public class GameClient {
         }
     }
 
-    public String drawBoard() throws ResponseException {
-        new BoardPrinter(gameData).printBoard(color);
-        return null;
+    public String drawBoard(ChessGame.TeamColor color) throws ResponseException {
+        new BoardPrinter(gameData, color).printBoard();
+        return "";
     }
 
     public String help() {
