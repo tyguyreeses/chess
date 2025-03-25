@@ -18,6 +18,6 @@ public record GameData(int gameID, String whiteUsername, String blackUsername, S
     }
     @Override
     public String toString() {
-        return String.format("%d. Game Name: %s\tWhite: %s\tBlack: %s", gameID, gameName, whiteUsername, blackUsername);
+        return String.format("Game Name: %s     White: %s     Black: %s", gameName, whiteUsername, blackUsername);
     }
 }

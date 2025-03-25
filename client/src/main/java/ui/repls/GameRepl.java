@@ -29,7 +29,7 @@ public class GameRepl {
         }
         Scanner scanner = new Scanner(System.in);
         Object result = "";
-        while (!result.equals("leave")) {
+        while (!result.equals("Successfully left game")) {
             printPrompt();
             String line = scanner.nextLine();
 

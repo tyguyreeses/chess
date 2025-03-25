@@ -23,7 +23,7 @@ public class PostLoginRepl {
             System.out.print("\n" + SET_TEXT_COLOR_BLUE + client.help());
             Scanner scanner = new Scanner(System.in);
             Object result = "";
-            while (!result.equals("logout")) {
+            while (!result.equals("Successfully logged out")) {
                 printPrompt();
                 String line = scanner.nextLine();
 
@@ -36,7 +36,7 @@ public class PostLoginRepl {
                     }
                 } catch (Throwable e) {
                     var msg = e.toString();
-                    System.out.print(SET_TEXT_COLOR_RED + msg);
+                    System.out.print(SET_TEXT_COLOR_RED + msg + "\n");
                 }
             }
             System.out.println();

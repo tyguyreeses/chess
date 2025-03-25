@@ -23,7 +23,7 @@ public class GameClient {
 //            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd.toLowerCase()) {
                 case "r", "redraw" -> drawBoard(color);
-                case "leave" -> "leave";
+                case "leave" -> "Successfully left game";
                 default -> help();
             };
         } catch (ResponseException ex) {
