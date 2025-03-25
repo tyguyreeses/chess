@@ -77,11 +77,11 @@ public class BoardPrinter {
 
         boolean lightSquare = (row + col) % 2 == 0;
         if (lightSquare) {
-            out.print(SET_BG_COLOR_WHITE);
-            out.print(SET_TEXT_COLOR_BLACK);
-        } else {
             out.print(SET_BG_COLOR_BLACK);
             out.print(SET_TEXT_COLOR_WHITE);
+        } else {
+            out.print(SET_BG_COLOR_WHITE);
+            out.print(SET_TEXT_COLOR_BLACK);
         }
 
         String display = (piece != null) ? piece.toString() : EMPTY;
