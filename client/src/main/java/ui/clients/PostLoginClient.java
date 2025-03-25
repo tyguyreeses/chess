@@ -18,7 +18,7 @@ public class PostLoginClient {
 
     }
 
-    public String eval(String input) {
+    public Object eval(String input) {
         try {
             var tokens = input.split(" ");
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
@@ -48,13 +48,13 @@ public class PostLoginClient {
         throw new ResponseException(400, "Expected format: <GAME NAME>");
     }
 
-    public String join(String... params) throws ResponseException {
+    public TeamColor join(String... params) throws ResponseException {
         if (params.length == 2) {
             TeamColor color = params[1].equalsIgnoreCase("white") ? TeamColor.WHITE : TeamColor.BLACK;
             try {
                 int gameID = Integer.parseInt(params[0]);
                 facade.joinGame(authData.authToken(), color, gameID);
-                return String.format("Joined game with ID = %d", gameID);
+                return color;
             } catch (NumberFormatException e) {
                 throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
             }
