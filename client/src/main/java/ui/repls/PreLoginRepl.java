@@ -30,8 +30,9 @@ public class PreLoginRepl {
                 result = client.eval(line);
                 if (result instanceof AuthData) {
                     new PostLoginRepl(facade, (AuthData) result).run();
+                } else {
+                    System.out.print(SET_TEXT_COLOR_BLUE + result);
                 }
-                System.out.print(SET_TEXT_COLOR_BLUE + result);
             } catch (Throwable e) {
                 var msg = e.toString();
                 System.out.print(SET_TEXT_COLOR_RED + msg);

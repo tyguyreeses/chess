@@ -68,15 +68,15 @@ public class PostLoginClient {
                 int gameID = Integer.parseInt(params[0]);
                 return String.format("Join game unimplemented, but format is correct: ID = %d", gameID);
             } catch (NumberFormatException e) {
-                throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+                throw new ResponseException(400, "Expected format: <GAME ID>");
             }
         }
-        throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+        throw new ResponseException(400, "Expected format: <GAME ID>");
     }
 
     public String logout() throws ResponseException {
         facade.logoutUser(authData.authToken());
-        return "logout";
+        return "";
     }
 
     public String help() {
@@ -87,7 +87,6 @@ public class PostLoginClient {
                 Join a game: "j", "join" <GAME ID> <COLOR>
                 Watch a game: "w", "watch" <GAME ID>
                 Logout: "logout"
-                View commands: "h", "help"
                 """;
     }
 }

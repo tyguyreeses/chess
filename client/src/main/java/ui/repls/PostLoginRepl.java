@@ -7,7 +7,6 @@ import ui.clients.PostLoginClient;
 import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
-import static ui.EscapeSequences.SET_TEXT_COLOR_GREEN;
 
 public class PostLoginRepl {
         private final PostLoginClient client;
@@ -19,11 +18,10 @@ public class PostLoginRepl {
         }
 
         public void run() {
-            System.out.println();
-            System.out.print(String.format("Successfully logged in as &s", authData.username()));
-
+            System.out.printf("Successfully logged in as " + authData.username());
+            System.out.print("\n" + SET_TEXT_COLOR_BLUE + client.help());
             Scanner scanner = new Scanner(System.in);
-            String result = "";
+            Object result = "";
             while (!result.equals("logout")) {
                 printPrompt();
                 String line = scanner.nextLine();
