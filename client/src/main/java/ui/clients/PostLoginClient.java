@@ -5,7 +5,9 @@ import exception.ResponseException;
 import model.*;
 import ui.ServerFacade;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 public class PostLoginClient {
     private final ServerFacade facade;
@@ -15,7 +17,6 @@ public class PostLoginClient {
     public PostLoginClient(ServerFacade serverFacade, AuthData authData) {
         this.facade = serverFacade;
         this.authData = authData;
-
     }
 
     public Object eval(String input) {
@@ -37,46 +38,72 @@ public class PostLoginClient {
     }
 
     public String list() throws ResponseException {
-            return facade.listGames(authData.authToken()).toString();
+        Collection<GameData> games = facade.listGames(authData.authToken());
+        if (games == null || games.isEmpty()) {
+            return "No games available.";
+        }
+        StringBuilder sb = new StringBuilder("Available Games:\n");
+        int count = 1;
+        for (GameData game : games) {
+            sb.append(count).append(".  ").append(game).append("\n");
+            count += 1;
+        }
+        return sb.toString();
     }
 
     public String create(String... params) throws ResponseException {
         if (params.length == 1) {
-            int gameID = facade.createGame(authData.authToken(), params[0]);
-            return String.format("Created game %s, ID = %d", params[0] ,gameID);
+            facade.createGame(authData.authToken(), params[0]);
+            return String.format("Created game %s", params[0]);
         }
         throw new ResponseException(400, "Expected format: <GAME NAME>");
     }
 
     public TeamColor join(String... params) throws ResponseException {
         if (params.length == 2) {
-            TeamColor color = params[1].equalsIgnoreCase("white") ? TeamColor.WHITE : TeamColor.BLACK;
+            int gameID = getGameID(params[0]);
+            TeamColor color = getTeamColor(params[1]);
             try {
-                int gameID = Integer.parseInt(params[0]);
                 facade.joinGame(authData.authToken(), color, gameID);
-                return color;
-            } catch (NumberFormatException e) {
-                throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+            } catch (ResponseException e) {
+                throw new ResponseException(400, e.getMessage());
             }
+            return color;
         }
         throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
     }
 
-    public String watch(String... params) throws ResponseException {
-        if (params.length == 1) {
-            try {
-                int gameID = Integer.parseInt(params[0]);
-                return String.format("Join game unimplemented, but format is correct: ID = %d", gameID);
-            } catch (NumberFormatException e) {
-                throw new ResponseException(400, "Expected format: <GAME ID>");
-            }
+    public TeamColor watch(String... params) throws ResponseException {
+        if (params.length == 2) {
+            int gameID = getGameID(params[0]);
+            return getTeamColor(params[1]);
         }
-        throw new ResponseException(400, "Expected format: <GAME ID>");
+        throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+    }
+
+    private int getGameID(String index) throws ResponseException {
+        try {
+            int gameIndex = Integer.parseInt(index) - 1;
+            ArrayList<GameData> games = (ArrayList<GameData>) facade.listGames(authData.authToken());
+            return games.get(gameIndex).gameID();
+        } catch (Exception e) {
+            throw new ResponseException(400, "Entered ID doesn't exist");
+        }
+    }
+
+    private TeamColor getTeamColor(String color) throws ResponseException {
+        if (color.equalsIgnoreCase("white")) {
+            return TeamColor.WHITE;
+        } else if (color.equalsIgnoreCase("black")) {
+            return TeamColor.BLACK;
+        } else {
+            throw new ResponseException(400, "Expected color as either 'white' or 'black");
+        }
     }
 
     public String logout() throws ResponseException {
         facade.logoutUser(authData.authToken());
-        return "";
+        return "Successfully logged out";
     }
 
     public String help() {
