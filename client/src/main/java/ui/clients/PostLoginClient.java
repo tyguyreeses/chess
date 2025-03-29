@@ -28,7 +28,7 @@ public class PostLoginClient {
                 case "l", "list" -> list();
                 case "c", "create" -> create(params);
                 case "j", "join" -> join(params);
-                case "w", "watch" -> watch(params);
+                case "o", "observe" -> observe(params);
                 case "logout" -> logout();
                 default -> help();
             };
@@ -73,12 +73,12 @@ public class PostLoginClient {
         throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
     }
 
-    public TeamColor watch(String... params) throws ResponseException {
-        if (params.length == 2) {
+    public TeamColor observe(String... params) throws ResponseException {
+        if (params.length == 1) {
             int gameID = getGameID(params[0]);
-            return getTeamColor(params[1]);
+            return TeamColor.WHITE; // always observe from white perspective
         }
-        throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
+        throw new ResponseException(400, "Expected format: <GAME ID>");
     }
 
     private int getGameID(String index) throws ResponseException {
@@ -112,7 +112,7 @@ public class PostLoginClient {
                 List current games: "l", "list"
                 Create a new game: "c", "create" <GAME NAME>
                 Join a game: "j", "join" <GAME ID> <COLOR>
-                Watch a game: "w", "watch" <GAME ID>
+                Observe a game: "o", "observe" <GAME ID>
                 Logout: "logout"
                 """;
     }
