@@ -13,7 +13,6 @@ public class PostLoginClient {
     private final ServerFacade facade;
     private final AuthData authData;
 
-
     public PostLoginClient(ServerFacade serverFacade, AuthData authData) {
         this.facade = serverFacade;
         this.authData = authData;
@@ -54,7 +53,8 @@ public class PostLoginClient {
     public String create(String... params) throws ResponseException {
         if (params.length == 1) {
             facade.createGame(authData.authToken(), params[0]);
-            return String.format("Created game %s", params[0]);
+            Collection<GameData> games = facade.listGames(authData.authToken());
+            return String.format("Created game %s, assigned ID: %d", params[0], games.size());
         }
         throw new ResponseException(400, "Expected format: <GAME NAME>");
     }

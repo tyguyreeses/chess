@@ -28,6 +28,7 @@ public class BoardPrinter {
 
         drawColumnHeaders(out);
         drawBoardRows(out);
+        drawColumnHeaders(out);
     }
 
     private void drawColumnHeaders(PrintStream out) {
@@ -57,7 +58,8 @@ public class BoardPrinter {
                 for (int col = 1; col <= BOARD_SIZE; col++) {
                     drawSquare(out, board, row, col);
                 }
-                out.println();
+                out.print(" " + row + " ");
+                if (row < BOARD_SIZE) { out.println(); }
             }
         } else {
             // For black: rows 1 to 8, columns 8 to 1.
@@ -66,7 +68,8 @@ public class BoardPrinter {
                 for (int col = BOARD_SIZE; col >= 1; col--) {
                     drawSquare(out, board, row, col);
                 }
-                out.println();
+                out.print(" " + row + " ");
+                if (row < BOARD_SIZE) { out.println(); }
             }
         }
     }
