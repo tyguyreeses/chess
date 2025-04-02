@@ -3,13 +3,14 @@ package server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import dataaccess.DataAccess;
-import dataaccess.MemoryDataAccess;
 import dataaccess.SqlDataAccess;
 import exception.ResponseException;
 import handlers.JoinRequest;
 import model.*;
 import services.Service;
 import spark.*;
+import websocket.WebSocketHandler;
+
 import java.util.Map;
 
 public class Server {
@@ -17,12 +18,14 @@ public class Server {
     Gson gson = new Gson();
     public DataAccess dataAccess = new SqlDataAccess();
     public Service service = new Service(dataAccess);
-
+    public WebSocketHandler WSHandler = new WebSocketHandler();
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
+
+        Spark.webSocket("/ws", WSHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", this::clearData);
