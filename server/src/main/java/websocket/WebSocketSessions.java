@@ -1,8 +1,9 @@
 package websocket;
 
+import org.eclipse.jetty.websocket.api.Session;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.websocket.Session;
 
 /*
 
@@ -13,7 +14,7 @@ Needs to function correctly when multiple games are running concurrently
  */
 public class WebSocketSessions {
     // tracks current connections by gameID and a set of all connections
-    public final ConcurrentHashMap<Integer, Set<Session>> connections = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Set<Session>> connections = new ConcurrentHashMap<>();
 
     public void add(Integer gameID, Session session) {
         connections.computeIfAbsent(gameID, k -> ConcurrentHashMap.newKeySet()).add(session);
