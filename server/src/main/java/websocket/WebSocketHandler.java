@@ -1,36 +1,26 @@
 package websocket;
 
 import com.google.gson.Gson;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import exception.ResponseException;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
-
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.Session;
-
-import static websocket.commands.UserGameCommand.CommandType.*;
+import javax.websocket.*;
+import java.io.IOException;
+import java.util.Set;
 
 public class WebSocketHandler extends Endpoint {
 
-    WebSocketSessions sessions = new WebSocketSessions();
+    WebSocketSessions WSS = new WebSocketSessions();
 
-    @OnWebSocketConnect
     public void onOpen(Session session, EndpointConfig endpointConfig) {
-
+        System.out.println("New WebSocket connection established: " + session.getId());
     }
-    @OnWebSocketClose
     public void onClose(Session session) {
-
+        System.out.println("New WebSocket connection closed: " + session.getId());
     }
-    @OnWebSocketError
     public void onError(Throwable throwable) {
-
+        System.out.println("Websocket encountered error: " + throwable.getMessage());
     }
-    @OnWebSocketMessage
     public void onMessage(Session session, String message) {
         // determine message type
         // call the appropriate message handler
@@ -58,8 +48,16 @@ public class WebSocketHandler extends Endpoint {
     public void sendMessage(ServerMessage message, Session session) {
 
     }
-    public void broadcastMessage(Integer gameID, ServerMessage message, Session excludedSession) {
-
+    public void broadcastMessage(Integer gameID, ServerMessage message, Session excludedSession) throws ResponseException {
+        Set<Session> sessions = WSS.getSessions(gameID);
+        for (Session session : sessions) {
+            if (!session.equals(excludedSession)) {
+                try {
+                    session.getBasicRemote().sendText(new Gson().toJson(message));
+                } catch (IOException e) {
+                    throw new ResponseException(500, e.getMessage());
+                }
+            }
+        }
     }
-
 }
