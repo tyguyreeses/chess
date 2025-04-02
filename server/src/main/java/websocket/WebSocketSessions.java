@@ -14,7 +14,7 @@ Needs to function correctly when multiple games are running concurrently
     - ex: notifications from one game don't get sent to the others
 
  */
-public class ConnectionManager {
+public class WebSocketSessions {
     // tracks current connections by gameID and a set of all connections
     public final ConcurrentHashMap<Integer, Set<Session>> connections = new ConcurrentHashMap<>();
 
