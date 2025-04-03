@@ -1,6 +1,8 @@
 package websocket;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import exception.ResponseException;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
@@ -14,15 +16,8 @@ import java.util.Set;
 public class WebSocketHandler {
 
     WebSocketSessions WSS = new WebSocketSessions();
+    Gson gson = new Gson();
 
-    @OnWebSocketConnect
-    public void onConnect(Session session) {
-        System.out.println("New WebSocket connection established");
-    }
-    @OnWebSocketClose
-    public void onClose(Session session) {
-        System.out.println("New WebSocket connection closed");
-    }
     @OnWebSocketError
     public void onError(Throwable throwable) {
         System.out.println("Websocket encountered error: " + throwable.getMessage());
@@ -30,18 +25,22 @@ public class WebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws ResponseException {
         // determine message type
+        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+        UserGameCommand.CommandType commandType = UserGameCommand.CommandType.valueOf(jsonObject.get("commandType").getAsString());
+
         // call the appropriate message handler
-        UserGameCommand ugc = new Gson().fromJson(message, UserGameCommand.class);
-        switch (ugc.getCommandType()) {
-            case CONNECT -> connect((ConnectGameCommand) ugc, session);
-            case MAKE_MOVE -> makeMove((MakeMoveGameCommand) ugc, session);
-            case LEAVE -> leaveGame((LeaveGameCommand) ugc, session);
-            case RESIGN -> resignGame((ResignGameCommand) ugc, session);
-        }
+        UserGameCommand ugc = switch (commandType) {
+            case CONNECT -> gson.fromJson(message, ConnectGameCommand.class);
+            case MAKE_MOVE -> gson.fromJson(message, MakeMoveGameCommand.class);
+            case LEAVE -> gson.fromJson(message, LeaveGameCommand.class);
+            case RESIGN -> gson.fromJson(message, ResignGameCommand.class);
+        };
     }
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
         // add connection to connection manager
         WSS.add(command.getGameID(), session);
+        // call service join game?
+
         // message the sender
         ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
         sendMessage(message, session);
