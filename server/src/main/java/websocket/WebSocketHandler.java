@@ -1,15 +1,22 @@
 package websocket;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import exception.ResponseException;
+import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
+import services.Service;
 import websocket.commands.*;
+import websocket.messages.ErrorServerMessage;
+import websocket.messages.LoadGameMessage;
+import websocket.messages.NotificationServerMessage;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 @WebSocket
@@ -17,6 +24,11 @@ public class WebSocketHandler {
 
     WebSocketSessions WSS = new WebSocketSessions();
     Gson gson = new Gson();
+    Service service;
+
+    public WebSocketHandler(Service service) {
+        this.service = service;
+    }
 
     @OnWebSocketError
     public void onError(Throwable throwable) {
@@ -29,23 +41,53 @@ public class WebSocketHandler {
         UserGameCommand.CommandType commandType = UserGameCommand.CommandType.valueOf(jsonObject.get("commandType").getAsString());
 
         // call the appropriate message handler
-        UserGameCommand ugc = switch (commandType) {
-            case CONNECT -> gson.fromJson(message, ConnectGameCommand.class);
-            case MAKE_MOVE -> gson.fromJson(message, MakeMoveGameCommand.class);
-            case LEAVE -> gson.fromJson(message, LeaveGameCommand.class);
-            case RESIGN -> gson.fromJson(message, ResignGameCommand.class);
+        switch (commandType) {
+            case CONNECT -> {
+                ConnectGameCommand cgc = gson.fromJson(message, ConnectGameCommand.class);
+                connect(cgc, session);
+            }
+            case MAKE_MOVE -> {
+                MakeMoveGameCommand mmgc = gson.fromJson(message, MakeMoveGameCommand.class);
+                makeMove(mmgc, session);
+            }
+            case LEAVE -> {
+                LeaveGameCommand lgc = gson.fromJson(message, LeaveGameCommand.class);
+                leaveGame(lgc, session);
+            }
+            case RESIGN -> {
+                ResignGameCommand rgc = gson.fromJson(message, ResignGameCommand.class);
+                resignGame(rgc, session);
+            }
         };
     }
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
+        Collection<GameData> gameCollection;
+        try {
+            // retrieve game
+            gameCollection = service.listGames(command.getAuthToken());
+        } catch (ResponseException e) {
+            ErrorServerMessage errorMessage = new ErrorServerMessage(e.getMessage());
+            sendMessage(errorMessage, session);
+            return;
+        }
         // add connection to connection manager
         WSS.add(command.getGameID(), session);
-        // call service join game?
-
-        // message the sender
-        ServerMessage message = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME);
-        sendMessage(message, session);
+        System.out.printf("GameID: %d%n", command.getGameID());
+        ChessGame game = null;
+        for (GameData data : gameCollection) {
+            if (data.gameID() == command.getGameID()) {
+                game = data.game();
+                LoadGameMessage message = new LoadGameMessage(game);
+                sendMessage(message, session);
+            }
+        }
+        if (game == null) {
+            ErrorServerMessage errorMessage = new ErrorServerMessage("Unable to connect to game");
+            sendMessage(errorMessage, session);
+            return;
+        }
         // message everyone else
-        ServerMessage broadcast = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        NotificationServerMessage broadcast = new NotificationServerMessage("A player joined the game");
         broadcastMessage(command.getGameID(), broadcast, session);
     }
     private void makeMove(MakeMoveGameCommand command, Session session) throws ResponseException {
