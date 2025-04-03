@@ -18,7 +18,7 @@ public class Server {
     Gson gson = new Gson();
     public DataAccess dataAccess = new SqlDataAccess();
     public Service service = new Service(dataAccess);
-    public WebSocketHandler WSHandler = new WebSocketHandler();
+    public WebSocketHandler WSHandler = new WebSocketHandler(service);
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
