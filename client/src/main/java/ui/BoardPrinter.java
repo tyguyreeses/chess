@@ -59,7 +59,7 @@ public class BoardPrinter {
                     drawSquare(out, board, row, col);
                 }
                 out.print(" " + row + " ");
-                if (row < BOARD_SIZE) { out.println(); }
+                if (row != 1) { out.println(); }
             }
         } else {
             // For black: rows 1 to 8, columns 8 to 1.
