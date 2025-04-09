@@ -18,7 +18,6 @@ import websocket.messages.ErrorServerMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationServerMessage;
 import websocket.messages.ServerMessage;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Objects;
@@ -102,7 +101,7 @@ public class WebSocketHandler {
                 // make the move
                 game.makeMove(move);
                 // update database
-                service.dataAccess.updateGame(gameData);
+                updateGame(gameData);
                 // tell everyone to update their game
                 LoadGameMessage lgm = new LoadGameMessage(game);
                 broadcastMessage(command.getGameID(), lgm, null);
@@ -118,34 +117,66 @@ public class WebSocketHandler {
         }
     }
 
-    private void leaveGame(LeaveGameCommand command, Session session) {
-
+    private void leaveGame(LeaveGameCommand command, Session session) throws ResponseException {
+        // if player, set corresponding user to null
+        GameData gameData = retrieveGameData(command);
+        TeamColor color = getPlayerColor(command, gameData);
+        if (color != null) {
+            updateGame(switch (color) {
+                case WHITE -> gameData.withWhiteUser(null);
+                case BLACK -> gameData.withBlackUser(null);
+            });
+        }
+        // broadcast to all other participants
+        String user = getUsername(command);
+        NotificationServerMessage message = new NotificationServerMessage(user + " has left the game");
+        broadcastMessage(command.getGameID(), message, session);
+        // remove connection
+        WSS.removeSessionFromGame(command.getGameID(), session);
     }
 
     private void resignGame(ResignGameCommand command, Session session) throws ResponseException {
-        // end the game
         GameData gameData = retrieveGameData(command);
-        gameData.game().gameOver = true;
-        try {
-            service.dataAccess.updateGame(gameData);
-        } catch (DataAccessException e) {
-            throw new ResponseException(500, e.getMessage());
+        // check if player
+        if (getPlayerColor(command, gameData) == null) {
+            throw new ResponseException(500, "Only players can resign");
         }
+        // check if game is already over
+        if (gameData.game().gameOver) {
+            throw new ResponseException(500, "Cannot resign, game is already over");
+        }
+        // end the game
+        gameData.game().gameOver = true;
+        updateGame(gameData);
         // broadcast who forfeited
         String user = getUsername(command);
         NotificationServerMessage message = new NotificationServerMessage(user + " resigned\nGame over");
         broadcastMessage(command.getGameID(), message,null);
     }
 
-    private String getUsername(UserGameCommand command) throws ResponseException {
-        return service.dataAccess.getAuth(command.getAuthToken()).username();
+    public void sendMessage(ServerMessage message, Session session) throws ResponseException {
+        try {
+            session.getRemote().sendString(new Gson().toJson(message));
+        } catch (IOException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
 
-    private void checkIfPlayer(UserGameCommand command, GameData gameData) throws ResponseException {
-        String username = getUsername(command);
-        if (!Objects.equals(username, gameData.blackUsername()) || !Objects.equals(username, gameData.whiteUsername())) {
-            throw new ResponseException(500, "Only players can resign or make moves");
+    public void broadcastMessage(Integer gameID, ServerMessage message, Session excludedSession) throws ResponseException {
+        Set<Session> sessions = WSS.getSessions(gameID);
+        for (Session session : sessions) {
+            if (!session.equals(excludedSession)) {
+                try {
+                    session.getRemote().sendString(new Gson().toJson(message));
+                } catch (IOException e) {
+                    throw new ResponseException(500, e.getMessage());
+                }
+            }
         }
+    }
+
+    private String getUsername(UserGameCommand command) throws ResponseException {
+        return service.dataAccess.getAuth(command.getAuthToken()).username();
     }
 
     private void checkCorrectPlayer(UserGameCommand command, GameData gameData, ChessMove move) throws ResponseException {
@@ -153,13 +184,26 @@ public class WebSocketHandler {
         ChessPiece movedPiece = gameData.game().getBoard().getPiece(move.getStartPosition());
 
         // validate user is a player
-        checkIfPlayer(command, gameData);
+        if (getPlayerColor(command, gameData) == null) {
+            throw new ResponseException(500, "Only players can make moves");
+        }
 
         TeamColor color = Objects.equals(username, gameData.blackUsername()) ? TeamColor.BLACK : TeamColor.WHITE;
 
         // validate moved piece matches user team
         if (color != movedPiece.getTeamColor()) {
             throw new ResponseException(500, "Only your own pieces can be moved");
+        }
+    }
+
+    private TeamColor getPlayerColor(UserGameCommand command, GameData gameData) throws ResponseException {
+        String username = getUsername(command);
+        if (Objects.equals(username, gameData.blackUsername())) {
+            return TeamColor.BLACK;
+        } else if (Objects.equals(username, gameData.whiteUsername())) {
+            return TeamColor.WHITE;
+        } else {
+            return null;
         }
     }
 
@@ -177,23 +221,11 @@ public class WebSocketHandler {
         }
     }
 
-    public void sendMessage(ServerMessage message, Session session) throws ResponseException {
+    private void updateGame(GameData gameData) throws ResponseException {
         try {
-            session.getRemote().sendString(new Gson().toJson(message));
-        } catch (IOException e) {
-            throw new ResponseException(500, e.getMessage());
-        }
-    }
-    public void broadcastMessage(Integer gameID, ServerMessage message, Session excludedSession) throws ResponseException {
-        Set<Session> sessions = WSS.getSessions(gameID);
-        for (Session session : sessions) {
-            if (!session.equals(excludedSession)) {
-                try {
-                    session.getRemote().sendString(new Gson().toJson(message));
-                } catch (IOException e) {
-                    throw new ResponseException(500, e.getMessage());
-                }
-            }
+            service.dataAccess.updateGame(gameData);
+        } catch (Exception e) {
+            throw new ResponseException(500, "Unable to update gameData");
         }
     }
 }
