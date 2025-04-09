@@ -3,11 +3,12 @@ package websocket;
 import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
+import chess.ChessGame.TeamColor;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dataaccess.DataAccessException;
 import exception.ResponseException;
-import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
@@ -36,7 +37,7 @@ public class WebSocketHandler {
 
     @OnWebSocketError
     public void onError(Throwable throwable) {
-        System.out.println("Websocket encountered error: " + throwable.getMessage());
+        System.out.println("Error in websocket: " + throwable.getMessage());
     }
 
     @OnWebSocketMessage
@@ -65,14 +66,15 @@ public class WebSocketHandler {
                 }
             }
         } catch (Exception e) {
-            ErrorServerMessage esm = new ErrorServerMessage(e.getMessage());
+            ErrorServerMessage esm = new ErrorServerMessage("Error: " + e.getMessage());
             sendMessage(esm, session);
         }
     }
+
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
         // add connection to connection manager
         WSS.addSessionToGame(command.getGameID(), session);
-        GameData gameData = retrieveGameData(command, session);
+        GameData gameData = retrieveGameData(command);
         // tell player to load game
         LoadGameMessage message = new LoadGameMessage(gameData.game());
         sendMessage(message, session);
@@ -86,7 +88,7 @@ public class WebSocketHandler {
         try {
             // retrieve move and game
             ChessMove move = command.getMove();
-            GameData gameData = retrieveGameData(command, session);
+            GameData gameData = retrieveGameData(command);
             ChessGame game = gameData.game();
             if (game.gameOver) {
                 throw new ResponseException(500, "Invalid move, game is over");
@@ -104,7 +106,6 @@ public class WebSocketHandler {
                 // tell everyone to update their game
                 LoadGameMessage lgm = new LoadGameMessage(game);
                 broadcastMessage(command.getGameID(), lgm, null);
-//                System.out.println("Chess board: \n" + game.getBoard());
                 // tell everyone but root client what move was made
                 NotificationServerMessage nsm = new NotificationServerMessage("Move was made: " + move);
                 broadcastMessage(command.getGameID(), nsm, session);
@@ -117,19 +118,44 @@ public class WebSocketHandler {
         }
     }
 
+    private void leaveGame(LeaveGameCommand command, Session session) {
+
+    }
+
+    private void resignGame(ResignGameCommand command, Session session) throws ResponseException {
+        // end the game
+        GameData gameData = retrieveGameData(command);
+        gameData.game().gameOver = true;
+        try {
+            service.dataAccess.updateGame(gameData);
+        } catch (DataAccessException e) {
+            throw new ResponseException(500, e.getMessage());
+        }
+        // broadcast who forfeited
+        String user = getUsername(command);
+        NotificationServerMessage message = new NotificationServerMessage(user + " resigned\nGame over");
+        broadcastMessage(command.getGameID(), message,null);
+    }
+
+    private String getUsername(UserGameCommand command) throws ResponseException {
+        return service.dataAccess.getAuth(command.getAuthToken()).username();
+    }
+
+    private void checkIfPlayer(UserGameCommand command, GameData gameData) throws ResponseException {
+        String username = getUsername(command);
+        if (!Objects.equals(username, gameData.blackUsername()) || !Objects.equals(username, gameData.whiteUsername())) {
+            throw new ResponseException(500, "Only players can resign or make moves");
+        }
+    }
+
     private void checkCorrectPlayer(UserGameCommand command, GameData gameData, ChessMove move) throws ResponseException {
-        String username = service.dataAccess.getAuth(command.getAuthToken()).username();
+        String username = getUsername(command);
         ChessPiece movedPiece = gameData.game().getBoard().getPiece(move.getStartPosition());
-        ChessGame.TeamColor color;
 
         // validate user is a player
-        if (Objects.equals(username, gameData.whiteUsername())) {
-            color = ChessGame.TeamColor.WHITE;
-        } else if (Objects.equals(username, gameData.blackUsername())) {
-            color = ChessGame.TeamColor.BLACK;
-        } else {
-            throw new ResponseException(500, "Only players can make moves");
-        }
+        checkIfPlayer(command, gameData);
+
+        TeamColor color = Objects.equals(username, gameData.blackUsername()) ? TeamColor.BLACK : TeamColor.WHITE;
 
         // validate moved piece matches user team
         if (color != movedPiece.getTeamColor()) {
@@ -137,14 +163,7 @@ public class WebSocketHandler {
         }
     }
 
-    private void leaveGame(LeaveGameCommand command, Session session) {
-
-    }
-    private void resignGame(ResignGameCommand command, Session session) {
-
-    }
-
-    private GameData retrieveGameData(UserGameCommand command, Session session) throws ResponseException {
+    private GameData retrieveGameData(UserGameCommand command) throws ResponseException {
         try {
             Collection<GameData> gameCollection = service.listGames(command.getAuthToken());
             for (GameData gameData : gameCollection) {
