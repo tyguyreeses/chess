@@ -16,32 +16,17 @@ public class WebSocketSessions {
     // tracks current connections by gameID and a set of all connections
     private final ConcurrentHashMap<Integer, Set<Session>> connections = new ConcurrentHashMap<>();
 
-    public void add(Integer gameID, Session session) {
+    public void addSessionToGame(Integer gameID, Session session) {
         connections.computeIfAbsent(gameID, k -> ConcurrentHashMap.newKeySet()).add(session);
     }
 
-    public void removeGame(Integer gameID) {
-        connections.remove(gameID);
-    }
-
-    public void removeSession(Integer gameID, Session session) {
+    public void removeSessionFromGame(Integer gameID, Session session) {
         Set<Session> sessions = connections.get(gameID);
         if (sessions != null) {
             sessions.remove(session);
             // remove from map if sessions is empty after removal
             if (sessions.isEmpty()) {
                 connections.remove(gameID);
-            }
-        }
-    }
-
-    public void removeAllOfSession(Session session) {
-        for (ConcurrentHashMap.Entry<Integer, Set<Session>> entry : connections.entrySet()) {
-            Set<Session> sessions = entry.getValue();
-            sessions.remove(session);
-            // remove from map if sessions is empty after removal
-            if (sessions.isEmpty()) {
-                connections.remove(entry.getKey());
             }
         }
     }
