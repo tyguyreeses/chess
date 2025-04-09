@@ -13,6 +13,7 @@ public class ChessGame {
 
     private TeamColor turn = TeamColor.WHITE;
     private final ChessBoard chessBoard = new ChessBoard();
+    public boolean gameOver = false;
 
     public ChessGame() {
         chessBoard.resetBoard();
@@ -85,6 +86,9 @@ public class ChessGame {
         if (piece == null) {
             throw new InvalidMoveException("No piece to be moved: move= " + move);
         }
+        if (gameOver) {
+            throw new InvalidMoveException("Game is over");
+        }
         // if it's the right team's turn
         if (piece.getTeamColor() == getTeamTurn()) {
 
@@ -137,6 +141,7 @@ public class ChessGame {
                 }
             }
             // if no piece can move so that the king isn't in check, you're in checkmate
+            gameOver = true;
             return true;
         }
         return false;
@@ -170,7 +175,10 @@ public class ChessGame {
         // check if current turn, if not in checkmate, and if the king can't move
         if (getTeamTurn() == teamColor && !isInCheck(teamColor) && validMoves(kingPos).isEmpty()) {
             // if any pieces of that team have moves, you're not in stalemate
-            return !doPiecesHaveMoves(teamColor);
+            if (!doPiecesHaveMoves(teamColor)) {
+                gameOver = true;
+                return true;
+            }
         }
         return false;
     }
