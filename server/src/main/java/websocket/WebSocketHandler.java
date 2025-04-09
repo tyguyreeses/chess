@@ -1,6 +1,7 @@
 package websocket;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -34,76 +35,100 @@ public class WebSocketHandler {
     public void onError(Throwable throwable) {
         System.out.println("Websocket encountered error: " + throwable.getMessage());
     }
+
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws ResponseException {
         // determine message type
         JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
         UserGameCommand.CommandType commandType = UserGameCommand.CommandType.valueOf(jsonObject.get("commandType").getAsString());
-
-        // call the appropriate message handler
-        switch (commandType) {
-            case CONNECT -> {
-                ConnectGameCommand cgc = gson.fromJson(message, ConnectGameCommand.class);
-                connect(cgc, session);
+        try {
+            // call the appropriate message handler
+            switch (commandType) {
+                case CONNECT -> {
+                    ConnectGameCommand cgc = gson.fromJson(message, ConnectGameCommand.class);
+                    connect(cgc, session);
+                }
+                case MAKE_MOVE -> {
+                    MakeMoveGameCommand mmgc = gson.fromJson(message, MakeMoveGameCommand.class);
+                    makeMove(mmgc, session);
+                }
+                case LEAVE -> {
+                    LeaveGameCommand lgc = gson.fromJson(message, LeaveGameCommand.class);
+                    leaveGame(lgc, session);
+                }
+                case RESIGN -> {
+                    ResignGameCommand rgc = gson.fromJson(message, ResignGameCommand.class);
+                    resignGame(rgc, session);
+                }
             }
-            case MAKE_MOVE -> {
-                MakeMoveGameCommand mmgc = gson.fromJson(message, MakeMoveGameCommand.class);
-                makeMove(mmgc, session);
-            }
-            case LEAVE -> {
-                LeaveGameCommand lgc = gson.fromJson(message, LeaveGameCommand.class);
-                leaveGame(lgc, session);
-            }
-            case RESIGN -> {
-                ResignGameCommand rgc = gson.fromJson(message, ResignGameCommand.class);
-                resignGame(rgc, session);
-            }
-        };
+        } catch (Exception e) {
+            ErrorServerMessage esm = new ErrorServerMessage(e.getMessage());
+            sendMessage(esm, session);
+        }
     }
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
-        Collection<GameData> gameCollection;
-        try {
-            // retrieve game
-            gameCollection = service.listGames(command.getAuthToken());
-        } catch (ResponseException e) {
-            ErrorServerMessage errorMessage = new ErrorServerMessage(e.getMessage());
-            sendMessage(errorMessage, session);
-            return;
-        }
         // add connection to connection manager
-        WSS.add(command.getGameID(), session);
-        System.out.printf("GameID: %d%n", command.getGameID());
-        ChessGame game = null;
-        for (GameData data : gameCollection) {
-            if (data.gameID() == command.getGameID()) {
-                game = data.game();
-                LoadGameMessage message = new LoadGameMessage(game);
-                sendMessage(message, session);
-            }
-        }
-        if (game == null) {
-            ErrorServerMessage errorMessage = new ErrorServerMessage("Unable to connect to game");
-            sendMessage(errorMessage, session);
-            return;
-        }
+        WSS.addSessionToGame(command.getGameID(), session);
+        GameData gameData = retrieveGameData(command, session);
+        // tell player to load game
+        LoadGameMessage message = new LoadGameMessage(gameData.game());
+        sendMessage(message, session);
+
         // message everyone else
         NotificationServerMessage broadcast = new NotificationServerMessage("A player joined the game");
         broadcastMessage(command.getGameID(), broadcast, session);
     }
+
     private void makeMove(MakeMoveGameCommand command, Session session) throws ResponseException {
-        // validate move
-        // make the move
-        // tell everyone to update their game
-//        ServerMessage everyone = new LoadGameMessage(ServerMessage.ServerMessageType.LOAD_GAME, );
-//        broadcastMessage(command.getGameID(), everyone, null);
-        // tell everyone but root client what move was made
-        ServerMessage whatMove = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION);
+        try {
+            // retrieve move and game
+            ChessMove move = command.getMove();
+            GameData gameData = retrieveGameData(command, session);
+            ChessGame game = gameData.game();
+            if (game.gameOver) {
+                throw new ResponseException(500, "Invalid move, game is over");
+            }
+            // if a valid move
+            if (game.validMoves(move.getStartPosition()).contains(move)) {
+                // make the move
+                game.makeMove(move);
+                // update database
+                service.dataAccess.updateGame(gameData);
+                // tell everyone to update their game
+                LoadGameMessage lgm = new LoadGameMessage(game);
+                broadcastMessage(command.getGameID(), lgm, null);
+//                System.out.println("Chess board: \n" + game.getBoard());
+                // tell everyone but root client what move was made
+                NotificationServerMessage nsm = new NotificationServerMessage("Move was made: " + move);
+                broadcastMessage(command.getGameID(), nsm, session);
+            // if not a valid move
+            } else {
+                throw new ResponseException(500, "Invalid move");
+            }
+        } catch (Exception e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
+
     private void leaveGame(LeaveGameCommand command, Session session) {
 
     }
     private void resignGame(ResignGameCommand command, Session session) {
 
+    }
+
+    private GameData retrieveGameData(UserGameCommand command, Session session) throws ResponseException {
+        try {
+            Collection<GameData> gameCollection = service.listGames(command.getAuthToken());
+            for (GameData gameData : gameCollection) {
+                if (gameData.gameID() == command.getGameID()) {
+                    return gameData;
+                }
+            }
+            throw new ResponseException(500, "Unable to retrieve game data");
+        } catch (Exception e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
 
     public void sendMessage(ServerMessage message, Session session) throws ResponseException {
