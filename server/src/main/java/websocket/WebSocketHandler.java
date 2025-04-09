@@ -2,10 +2,12 @@ package websocket;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.ChessPiece;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import exception.ResponseException;
+import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
@@ -18,6 +20,7 @@ import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 @WebSocket
@@ -88,6 +91,10 @@ public class WebSocketHandler {
             if (game.gameOver) {
                 throw new ResponseException(500, "Invalid move, game is over");
             }
+
+            // retrieve player data and confirm the right player is making the move
+            checkCorrectPlayer(command, gameData, move);
+
             // if a valid move
             if (game.validMoves(move.getStartPosition()).contains(move)) {
                 // make the move
@@ -107,6 +114,26 @@ public class WebSocketHandler {
             }
         } catch (Exception e) {
             throw new ResponseException(500, e.getMessage());
+        }
+    }
+
+    private void checkCorrectPlayer(UserGameCommand command, GameData gameData, ChessMove move) throws ResponseException {
+        String username = service.dataAccess.getAuth(command.getAuthToken()).username();
+        ChessPiece movedPiece = gameData.game().getBoard().getPiece(move.getStartPosition());
+        ChessGame.TeamColor color;
+
+        // validate user is a player
+        if (Objects.equals(username, gameData.whiteUsername())) {
+            color = ChessGame.TeamColor.WHITE;
+        } else if (Objects.equals(username, gameData.blackUsername())) {
+            color = ChessGame.TeamColor.BLACK;
+        } else {
+            throw new ResponseException(500, "Only players can make moves");
+        }
+
+        // validate moved piece matches user team
+        if (color != movedPiece.getTeamColor()) {
+            throw new ResponseException(500, "Only your own pieces can be moved");
         }
     }
 
