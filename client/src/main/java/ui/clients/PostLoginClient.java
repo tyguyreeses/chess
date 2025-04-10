@@ -59,7 +59,7 @@ public class PostLoginClient {
         throw new ResponseException(400, "Expected format: <GAME NAME>");
     }
 
-    public TeamColor join(String... params) throws ResponseException {
+    public myPair join(String... params) throws ResponseException {
         if (params.length == 2) {
             int gameID = getGameID(params[0]);
             TeamColor color = getTeamColor(params[1]);
@@ -68,15 +68,15 @@ public class PostLoginClient {
             } catch (ResponseException e) {
                 throw new ResponseException(400, e.getMessage());
             }
-            return color;
+            return new myPair(color, gameID);
         }
         throw new ResponseException(400, "Expected format: <GAME ID> <COLOR>");
     }
 
-    public TeamColor observe(String... params) throws ResponseException {
+    public myPair observe(String... params) throws ResponseException {
         if (params.length == 1) {
             int gameID = getGameID(params[0]);
-            return TeamColor.WHITE; // always observe from white perspective
+            return new myPair(TeamColor.WHITE, gameID); // always observe from white perspective
         }
         throw new ResponseException(400, "Expected format: <GAME ID>");
     }
