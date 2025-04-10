@@ -3,28 +3,30 @@ package ui.websocket;
 import chess.ChessMove;
 import com.google.gson.Gson;
 import exception.ResponseException;
-import model.AuthData;
 import websocket.commands.*;
-import websocket.messages.ServerMessage;
-
 import javax.websocket.*;
-import java.io.IOException;
+import java.net.URI;
 
-public class WebsocketFacade extends Endpoint implements MessageHandler {
+public class WebsocketFacade extends Endpoint implements MessageHandler.Whole<String> {
 
-    Session session;
+    public Session session;
     GameHandler gameHandler;
-    Gson gson = new Gson();
+
+    public WebsocketFacade(int port) throws Exception {
+        URI uri = new URI("ws://localhost:"+port+"/ws");
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        this.session = container.connectToServer(this, uri);
+    }
 
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
         this.session = session;
-        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(String message) {
-                gameHandler.printMessage(message);
-            }
-        });
+        this.session.addMessageHandler(this);
+    }
+
+    @Override
+    public void onMessage(String message) {
+        gameHandler.printMessage(message);
     }
 
     public void connect(String auth, int gameID, Session session) throws ResponseException {
@@ -50,7 +52,7 @@ public class WebsocketFacade extends Endpoint implements MessageHandler {
     private void sendMessage(UserGameCommand command, Session session) throws ResponseException {
         try {
             session.getBasicRemote().sendText(new Gson().toJson(command));
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ResponseException(500, e.getMessage());
         }
     }

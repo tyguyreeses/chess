@@ -13,8 +13,10 @@ import java.util.Collection;
 public class ServerFacade {
 
     final String serverUrl;
+    public final int port;
 
     public ServerFacade(int port) {
+        this.port = port;
         serverUrl = "http://localhost:" + port;
     }
 
