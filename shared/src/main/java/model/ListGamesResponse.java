@@ -1,8 +1,8 @@
 package model;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * @param games
  */
-public record ListGamesResponse(Collection<GameData> games) {}
+public record ListGamesResponse(List<GameData> games) {}

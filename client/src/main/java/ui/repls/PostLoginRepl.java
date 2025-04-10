@@ -6,7 +6,7 @@ import ui.ServerFacade;
 import ui.clients.myPair;
 import ui.clients.PostLoginClient;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Scanner;
 
 import static ui.EscapeSequences.*;
@@ -54,7 +54,7 @@ public class PostLoginRepl {
         }
 
         private GameData retrieveGameData(int gameID) throws ResponseException {
-            Collection<GameData> gameList = facade.listGames(authData.authToken());
+            List<GameData> gameList = facade.listGames(authData.authToken());
             for (GameData game : gameList) {
                 if (game.gameID() == gameID) {
                     return game;

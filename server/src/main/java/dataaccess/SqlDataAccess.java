@@ -15,7 +15,7 @@ import java.sql.SQLException;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -84,7 +84,7 @@ public class SqlDataAccess implements DataAccess {
     // return a Map with the specific expected parameter
     @SuppressWarnings("unchecked")
     public Map<Integer, GameData> getGames() throws ResponseException {
-        String statement = "SELECT * FROM games";
+        String statement = "SELECT * FROM games ORDER BY id";
         return (Map<Integer, GameData>) retrieveData(statement, null, "gameMap");
     }
 
@@ -155,7 +155,7 @@ public class SqlDataAccess implements DataAccess {
     }
 
     private Map<Integer, GameData> readGameMap (ResultSet rs) throws SQLException {
-        Map<Integer, GameData> gameMap = new HashMap<>();
+        Map<Integer, GameData> gameMap = new LinkedHashMap<>();
         do {
             int id = rs.getInt("id");
             gameMap.put(id, readGameData(rs));

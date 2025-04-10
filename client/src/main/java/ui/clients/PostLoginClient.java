@@ -5,9 +5,8 @@ import exception.ResponseException;
 import model.*;
 import ui.ServerFacade;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 public class PostLoginClient {
     private final ServerFacade facade;
@@ -37,7 +36,7 @@ public class PostLoginClient {
     }
 
     public String list() throws ResponseException {
-        Collection<GameData> games = facade.listGames(authData.authToken());
+        List<GameData> games = facade.listGames(authData.authToken());
         if (games == null || games.isEmpty()) {
             return "No games available.";
         }
@@ -53,7 +52,7 @@ public class PostLoginClient {
     public String create(String... params) throws ResponseException {
         if (params.length == 1) {
             facade.createGame(authData.authToken(), params[0]);
-            Collection<GameData> games = facade.listGames(authData.authToken());
+            List<GameData> games = facade.listGames(authData.authToken());
             return String.format("Created game %s, assigned ID: %d", params[0], games.size());
         }
         throw new ResponseException(400, "Expected format: <GAME NAME>");
@@ -84,7 +83,7 @@ public class PostLoginClient {
     private int getGameID(String index) throws ResponseException {
         try {
             int gameIndex = Integer.parseInt(index) - 1;
-            ArrayList<GameData> games = (ArrayList<GameData>) facade.listGames(authData.authToken());
+            List<GameData> games = facade.listGames(authData.authToken());
             return games.get(gameIndex).gameID();
         } catch (Exception e) {
             throw new ResponseException(400, "Entered ID doesn't exist");

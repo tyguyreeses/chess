@@ -8,7 +8,7 @@ import model.*;
 
 import java.io.*;
 import java.net.*;
-import java.util.Collection;
+import java.util.List;
 
 public class ServerFacade {
 
@@ -50,7 +50,7 @@ public class ServerFacade {
         return response.get("gameID").getAsInt();
     }
 
-    public Collection<GameData> listGames(String authToken) throws ResponseException {
+    public List<GameData> listGames(String authToken) throws ResponseException {
         var path = "/game";
         ListGamesResponse games = this.makeRequest("GET", path, null, ListGamesResponse.class, authToken);
         return games.games();
