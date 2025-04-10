@@ -1,6 +1,7 @@
 package passoff.server;
 
 import chess.*;
+import exception.ResponseException;
 import org.junit.jupiter.api.*;
 import passoff.model.*;
 import passoff.websocket.*;
@@ -26,7 +27,8 @@ public class WebSocketTests {
     private Integer gameID;
 
     @AfterAll
-    static void stopServer() {
+    static void stopServer() throws ResponseException {
+        server.dataAccess.clearData();
         server.stop();
     }
 
