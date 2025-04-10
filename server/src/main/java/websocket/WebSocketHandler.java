@@ -7,7 +7,6 @@ import chess.ChessGame.TeamColor;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import dataaccess.DataAccessException;
 import exception.ResponseException;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
