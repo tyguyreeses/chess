@@ -1,27 +1,41 @@
-package ui.clients;
+package ui.repls;
 
 import chess.ChessGame;
+import chess.ChessGame.*;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import exception.ResponseException;
 import model.*;
-import ui.BoardPrinter;
+import ui.clients.GameClient;
 import ui.websocket.GameHandler;
+import ui.websocket.WebsocketFacade;
 import websocket.messages.ErrorServerMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationServerMessage;
 import websocket.messages.ServerMessage;
+
+import java.util.Scanner;
+
 import static ui.EscapeSequences.*;
+import static ui.EscapeSequences.SET_TEXT_COLOR_GREEN;
 
 public class GameUI implements GameHandler {
+    private final GameClient client;
+    private final TeamColor color;
     private GameData gameData;
-    private final ChessGame.TeamColor color;
+    private final WebsocketFacade websocket;
     private final Gson gson = new Gson();
 
-    public GameUI(GameData gameData, ChessGame.TeamColor color) {
+    public GameUI(AuthData authData, TeamColor color, GameData gameData, int port) {
         this.gameData = gameData;
         this.color = color;
+        try {
+            this.websocket = new WebsocketFacade(port);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        client = new GameClient(authData, gameData, color, websocket);
     }
 
     @Override
@@ -34,7 +48,10 @@ public class GameUI implements GameHandler {
         try {
             ServerMessage message = processMessage(jsonMessage);
             switch (message.getServerMessageType()) {
-                case LOAD_GAME -> drawBoard(color);
+                case LOAD_GAME -> {
+                    this.gameData = ((LoadGameMessage) message).game;
+                    client.drawBoard(color);
+                }
                 case NOTIFICATION -> printNotification((NotificationServerMessage) message);
                 case ERROR -> printError((ErrorServerMessage) message);
             }
@@ -60,44 +77,41 @@ public class GameUI implements GameHandler {
     }
 
     private void printNotification(NotificationServerMessage message) {
-
+        System.out.println(SET_TEXT_COLOR_RED + message.message);
     }
 
     private void printError(ErrorServerMessage message) {
+        System.out.println(SET_TEXT_COLOR_RED + message.errorMessage);
 
     }
 
-    public Object eval(String input) {
+    public void run() {
+        System.out.printf("Successfully joined \"" + gameData.gameName() + '"');
         try {
-            String[] tokens = input.split(" ");
-            String cmd = (tokens.length > 0) ? tokens[0] : "help";
-//            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd.toLowerCase()) {
-                case "hl", "highlight" -> null;
-                case "m", "move" -> null;
-                case "r", "redraw" -> drawBoard(color);
-                case "res", "resign" -> null;
-                case "leave" -> "Successfully left game";
-                default -> help();
-            };
-        } catch (ResponseException ex) {
-            return ex.getMessage();
+            client.drawBoard(color);
+        } catch (ResponseException e) {
+            System.out.println(e.getMessage());
         }
+        Scanner scanner = new Scanner(System.in);
+        Object result = "";
+        while (!result.equals("Successfully left game")) {
+            printPrompt();
+            String line = scanner.nextLine();
+
+            try {
+                result = client.eval(line);
+                if (result != "") {
+                    System.out.print(SET_TEXT_COLOR_BLUE + result);
+                }
+            } catch (Throwable e) {
+                var msg = e.toString();
+                System.out.print(SET_TEXT_COLOR_RED + msg);
+            }
+        }
+        System.out.println();
     }
 
-    public String drawBoard(ChessGame.TeamColor color) throws ResponseException {
-        new BoardPrinter(gameData, color).printBoard();
-        return "";
-    }
-
-    public String help() {
-        return """
-            Options:
-            Highlight legal moves: "hl", "highlight" <POSITION> (e.g. f5)
-            Make a move: "m", "move" <SOURCE> <DESTINATION> <OPTIONAL PROMOTION> (e.g. f5 e4 q)
-            Redraw board: "r", "redraw"
-            Resign from game: "res", "resign"
-            Leave game: "leave"
-            """;
+    private void printPrompt() {
+        System.out.print("\n" + RESET_TEXT_COLOR + ">>> " + SET_TEXT_COLOR_GREEN);
     }
 }
