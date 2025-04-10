@@ -1,7 +1,10 @@
 package ui.websocket;
 
+import chess.ChessMove;
 import com.google.gson.Gson;
 import exception.ResponseException;
+import model.AuthData;
+import websocket.commands.*;
 import websocket.messages.ServerMessage;
 
 import javax.websocket.*;
@@ -11,43 +14,42 @@ public class WebsocketFacade extends Endpoint implements MessageHandler {
 
     Session session;
     GameHandler gameHandler;
+    Gson gson = new Gson();
 
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
+        this.session = session;
+        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
             @Override
             public void onMessage(String message) {
-                System.out.println("Received message: " + message);
-                try {
-                    session.getBasicRemote().sendText("Echo: " + message);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                gameHandler.printMessage(message);
             }
         });
     }
 
-    @Override
-    public void onClose(Session session, CloseReason closeReason) {
-        super.onClose(session, closeReason);
+    public void connect(String auth, int gameID, Session session) throws ResponseException {
+        ConnectGameCommand command = new ConnectGameCommand(auth, gameID);
+        sendMessage(command, session);
     }
 
-    @Override
-    public void onError(Session session, Throwable thr) {
-        super.onError(session, thr);
+    public void makeMove(String auth, int gameID, ChessMove move, Session session) throws ResponseException {
+        MakeMoveGameCommand command = new MakeMoveGameCommand(auth, gameID, move);
+        sendMessage(command, session);
     }
 
-    public void connect(Session session) {}
+    public void leaveGame(String auth, int gameID, Session session) throws ResponseException {
+        LeaveGameCommand command = new LeaveGameCommand(auth, gameID);
+        sendMessage(command, session);
+    }
 
-    public void makeMove(Session session) {}
+    public void resignGame(String auth, int gameID, Session session) throws ResponseException {
+        ResignGameCommand command = new ResignGameCommand(auth, gameID);
+        sendMessage(command, session);
+    }
 
-    public void leaveGame(Session session) {}
-
-    public void resignGame(Session session) {}
-
-    private void sendMessage(ServerMessage serverMessage) throws ResponseException {
+    private void sendMessage(UserGameCommand command, Session session) throws ResponseException {
         try {
-            session.getBasicRemote().sendText(new Gson().toJson(serverMessage));
+            session.getBasicRemote().sendText(new Gson().toJson(command));
         } catch (IOException e) {
             throw new ResponseException(500, e.getMessage());
         }
