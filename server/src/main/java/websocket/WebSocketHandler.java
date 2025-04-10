@@ -74,7 +74,7 @@ public class WebSocketHandler {
         WSS.addSessionToGame(command.getGameID(), session);
         GameData gameData = retrieveGameData(command);
         // tell player to load game
-        LoadGameMessage message = new LoadGameMessage(gameData.game());
+        LoadGameMessage message = new LoadGameMessage(gameData);
         sendMessage(message, session);
 
         // message everyone else
@@ -102,7 +102,7 @@ public class WebSocketHandler {
                 // update database
                 updateGame(gameData);
                 // tell everyone to update their game
-                LoadGameMessage lgm = new LoadGameMessage(game);
+                LoadGameMessage lgm = new LoadGameMessage(gameData);
                 broadcastMessage(command.getGameID(), lgm, null);
                 // tell everyone but root client what move was made
                 NotificationServerMessage nsm = new NotificationServerMessage("Move was made: " + move);
