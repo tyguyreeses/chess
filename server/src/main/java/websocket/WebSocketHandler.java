@@ -70,8 +70,9 @@ public class WebSocketHandler {
     }
 
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
-        // add connection to connection manager
-        wss.addSessionToGame(command.getGameID(), session);
+        // tell client to load game
+        LoadGameMessage lgm = new LoadGameMessage(retrieveGameData(command));
+        sendMessage(lgm, session);
         // message everyone else
         String user = getUsername(command);
         TeamColor color = getPlayerColor(command, retrieveGameData(command));
@@ -79,8 +80,11 @@ public class WebSocketHandler {
         if (color == null) {
             message = user + " is observing the game";
         } else {
-            message = user + "joined the game as " + color.toString().toUpperCase();
+            message = user + " joined the game as " + color.toString().toUpperCase();
         }
+        // add connection to connection manager
+        wss.addSessionToGame(command.getGameID(), session);
+        // broadcast notification
         NotificationServerMessage broadcast = new NotificationServerMessage(message);
         broadcastMessage(command.getGameID(), broadcast, session);
     }
