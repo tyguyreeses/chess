@@ -74,8 +74,8 @@ public class WebSocketHandler {
         WSS.addSessionToGame(command.getGameID(), session);
         GameData gameData = retrieveGameData(command);
         // tell player to load game
-        LoadGameMessage message = new LoadGameMessage(gameData);
-        sendMessage(message, session);
+//        LoadGameMessage message = new LoadGameMessage(gameData);
+//        sendMessage(message, session);
 
         // message everyone else
         NotificationServerMessage broadcast = new NotificationServerMessage("A player joined the game");
