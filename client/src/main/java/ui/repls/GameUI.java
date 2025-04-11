@@ -58,6 +58,7 @@ public class GameUI implements GameHandler {
                     this.gameData = lgm.game;
                     client.gameData = lgm.game;
                     client.drawBoard(color);
+                    printPrompt();
                 }
                 case NOTIFICATION -> {
                     NotificationServerMessage nsm = gson.fromJson(message, NotificationServerMessage.class);
@@ -74,11 +75,13 @@ public class GameUI implements GameHandler {
     }
 
     private void printNotification(NotificationServerMessage message) {
-        System.out.println(SET_TEXT_COLOR_BLUE + message.message + "\n");
+        System.out.println(SET_TEXT_COLOR_BLUE + message.message);
+        printPrompt();
     }
 
     private void printError(ErrorServerMessage message) {
         System.out.println(SET_TEXT_COLOR_RED + message.errorMessage);
+        printPrompt();
 
     }
 
