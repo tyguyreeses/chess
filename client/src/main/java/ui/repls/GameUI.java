@@ -2,9 +2,6 @@ package ui.repls;
 
 import chess.ChessGame;
 import chess.ChessGame.*;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import exception.ResponseException;
 import model.*;
 import ui.clients.GameClient;
@@ -21,17 +18,19 @@ import static ui.EscapeSequences.*;
 import static ui.EscapeSequences.SET_TEXT_COLOR_GREEN;
 
 public class GameUI implements GameHandler {
+
     private final GameClient client;
     private final TeamColor color;
     private GameData gameData;
     private final WebsocketFacade websocket;
-    private final Gson gson = new Gson();
 
     public GameUI(AuthData authData, TeamColor color, GameData gameData, int port) {
         this.gameData = gameData;
         this.color = color;
         try {
-            this.websocket = new WebsocketFacade(port);
+            websocket = new WebsocketFacade(port, this);
+            // send connect message to server
+            websocket.connect(authData.authToken(), gameData.gameID(), websocket.session);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -44,9 +43,8 @@ public class GameUI implements GameHandler {
     }
 
     @Override
-    public void printMessage(String jsonMessage) {
+    public void printMessage(ServerMessage message) {
         try {
-            ServerMessage message = processMessage(jsonMessage);
             switch (message.getServerMessageType()) {
                 case LOAD_GAME -> {
                     this.gameData = ((LoadGameMessage) message).game;
@@ -57,22 +55,6 @@ public class GameUI implements GameHandler {
             }
         } catch (ResponseException e) {
             System.out.println(SET_TEXT_COLOR_RED + e.getMessage());
-        }
-    }
-
-    private ServerMessage processMessage(String message) throws ResponseException {
-        // determine message type
-        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
-        ServerMessage.ServerMessageType messageType = ServerMessage.ServerMessageType.valueOf(jsonObject.get("messageType").getAsString());
-        try {
-            // call the appropriate message handler
-            return switch (messageType) {
-                case LOAD_GAME -> gson.fromJson(message, LoadGameMessage.class);
-                case NOTIFICATION -> gson.fromJson(message, NotificationServerMessage.class);
-                case ERROR -> gson.fromJson(message, ErrorServerMessage.class);
-            };
-        } catch (Exception e) {
-            throw new ResponseException(500, "Unable to process incoming message");
         }
     }
 

@@ -4,30 +4,39 @@ import chess.ChessMove;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import websocket.commands.*;
+import websocket.messages.ServerMessage;
+
 import javax.websocket.*;
 import java.net.URI;
 
-public class WebsocketFacade extends Endpoint implements MessageHandler.Whole<String> {
+public class WebsocketFacade extends Endpoint {
 
     public Session session;
     GameHandler gameHandler;
 
-    public WebsocketFacade(int port) throws Exception {
-        URI uri = new URI("ws://localhost:"+port+"/ws");
-        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-        this.session = container.connectToServer(this, uri);
+    public WebsocketFacade(int port, GameHandler gameHandler) throws ResponseException {
+        try {
+            URI uri = new URI("ws://localhost:" + port + "/ws");
+            this.gameHandler = gameHandler;
+
+            WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+            this.session = container.connectToServer(this, uri);
+
+            // set message handler
+            this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+                @Override
+                public void onMessage(String message) {
+                    ServerMessage severMessage = new Gson().fromJson(message, ServerMessage.class);
+                    gameHandler.printMessage(severMessage);
+                }
+            });
+        } catch (Exception e) {
+            throw new ResponseException(500, e.getMessage());
+        }
     }
 
     @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {
-        this.session = session;
-        this.session.addMessageHandler(this);
-    }
-
-    @Override
-    public void onMessage(String message) {
-        gameHandler.printMessage(message);
-    }
+    public void onOpen(Session session, EndpointConfig endpointConfig) {}
 
     public void connect(String auth, int gameID, Session session) throws ResponseException {
         ConnectGameCommand command = new ConnectGameCommand(auth, gameID);
