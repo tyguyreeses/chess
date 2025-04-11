@@ -13,7 +13,7 @@ import ui.websocket.WebsocketFacade;
 import java.util.Arrays;
 
 public class GameClient {
-    private GameData gameData;
+    public GameData gameData;
     private final AuthData authData;
     private final WebsocketFacade websocket;
     private final ChessGame.TeamColor color;

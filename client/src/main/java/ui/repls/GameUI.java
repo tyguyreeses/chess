@@ -2,6 +2,9 @@ package ui.repls;
 
 import chess.ChessGame;
 import chess.ChessGame.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import exception.ResponseException;
 import model.*;
 import ui.clients.GameClient;
@@ -23,6 +26,7 @@ public class GameUI implements GameHandler {
     private final TeamColor color;
     private GameData gameData;
     private final WebsocketFacade websocket;
+    private final Gson gson = new Gson();
 
     public GameUI(AuthData authData, TeamColor color, GameData gameData, int port) {
         this.gameData = gameData;
@@ -39,19 +43,29 @@ public class GameUI implements GameHandler {
 
     @Override
     public void updateGame(ChessGame game) {
-        this.gameData = gameData.withUpdatedGame(game);
+        gameData = gameData.withUpdatedGame(game);
+        client.gameData = gameData;
     }
 
     @Override
-    public void printMessage(ServerMessage message) {
+    public void printMessage(String message) {
+        JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+        ServerMessage.ServerMessageType messageType = ServerMessage.ServerMessageType.valueOf(jsonObject.get("serverMessageType").getAsString());
         try {
-            switch (message.getServerMessageType()) {
+            switch (messageType) {
                 case LOAD_GAME -> {
-                    this.gameData = ((LoadGameMessage) message).game;
+                    LoadGameMessage lgm = gson.fromJson(message, LoadGameMessage.class);
+                    this.gameData = lgm.game;
                     client.drawBoard(color);
                 }
-                case NOTIFICATION -> printNotification((NotificationServerMessage) message);
-                case ERROR -> printError((ErrorServerMessage) message);
+                case NOTIFICATION -> {
+                    NotificationServerMessage nsm = gson.fromJson(message, NotificationServerMessage.class);
+                    printNotification(nsm);
+                }
+                case ERROR -> {
+                    ErrorServerMessage esm = gson.fromJson(message, ErrorServerMessage.class);
+                    printError(esm);
+                }
             }
         } catch (ResponseException e) {
             System.out.println(SET_TEXT_COLOR_RED + e.getMessage());

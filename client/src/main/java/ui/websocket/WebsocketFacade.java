@@ -21,22 +21,28 @@ public class WebsocketFacade extends Endpoint {
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, uri);
-
-            // set message handler
-            this.session.addMessageHandler(new MessageHandler.Whole<String>() {
-                @Override
-                public void onMessage(String message) {
-                    ServerMessage severMessage = new Gson().fromJson(message, ServerMessage.class);
-                    gameHandler.printMessage(severMessage);
-                }
-            });
         } catch (Exception e) {
             throw new ResponseException(500, e.getMessage());
         }
     }
 
     @Override
-    public void onOpen(Session session, EndpointConfig endpointConfig) {}
+    public void onOpen(Session session, EndpointConfig endpointConfig) {
+        this.session = session;
+        // set message handler
+        this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+            @Override
+            public void onMessage(String message) {
+                System.out.println("Message client received: " + message);
+                gameHandler.printMessage(message);
+            }
+        });
+    }
+
+    @Override
+    public void onError(Session session, Throwable thr) {
+        System.err.println("WebSocket error: " + thr.getMessage());
+    }
 
     public void connect(String auth, int gameID, Session session) throws ResponseException {
         ConnectGameCommand command = new ConnectGameCommand(auth, gameID);
