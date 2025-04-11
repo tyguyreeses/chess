@@ -1,13 +1,12 @@
 package ui;
 
-import chess.ChessGame;
-import chess.ChessBoard;
-import chess.ChessPiece;
-import chess.ChessPosition;
+import chess.*;
 import model.GameData;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 
 import static ui.EscapeSequences.*;
 
@@ -27,7 +26,27 @@ public class BoardPrinter {
         out.print(ERASE_SCREEN);
 
         drawColumnHeaders(out);
-        drawBoardRows(out);
+        drawBoardRows(out, null);
+        drawColumnHeaders(out);
+    }
+
+    public void printBoardWithHighlights(ChessPosition selectedPiecePos) {
+        PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
+        out.print(ERASE_SCREEN);
+
+        ChessBoard board = game.getBoard();
+        ChessPiece piece = board.getPiece(selectedPiecePos);
+
+        Set<ChessPosition> highlightSet = new HashSet<>();
+        if (piece != null && piece.getTeamColor() == color) {
+            var validMoves = game.validMoves(selectedPiecePos);
+            for (ChessMove move : validMoves) {
+                highlightSet.add(move.getEndPosition());
+            }
+        }
+
+        drawColumnHeaders(out);
+        drawBoardRows(out, highlightSet);
         drawColumnHeaders(out);
     }
 
@@ -47,7 +66,7 @@ public class BoardPrinter {
         out.println();
     }
 
-    private void drawBoardRows(PrintStream out) {
+    private void drawBoardRows(PrintStream out, Set<ChessPosition> highlightSet) {
         ChessBoard board = game.getBoard();
 
         if (color == ChessGame.TeamColor.WHITE) {
@@ -56,7 +75,7 @@ public class BoardPrinter {
                 // Print row header (row number)
                 out.print(" " + row + " ");
                 for (int col = 1; col <= BOARD_SIZE; col++) {
-                    drawSquare(out, board, row, col);
+                    drawSquare(out, board, row, col, highlightSet);
                 }
                 out.print(" " + row + " ");
                 if (row != 1) { out.println(); }
@@ -66,7 +85,7 @@ public class BoardPrinter {
             for (int row = 1; row <= BOARD_SIZE; row++) {
                 out.print(" " + row + " ");
                 for (int col = BOARD_SIZE; col >= 1; col--) {
-                    drawSquare(out, board, row, col);
+                    drawSquare(out, board, row, col, highlightSet);
                 }
                 out.print(" " + row + " ");
                 if (row < BOARD_SIZE) { out.println(); }
@@ -74,12 +93,16 @@ public class BoardPrinter {
         }
     }
 
-    private void drawSquare(PrintStream out, ChessBoard board, int row, int col) {
+    private void drawSquare(PrintStream out, ChessBoard board, int row, int col, Set<ChessPosition> highlightSet) {
         ChessPosition pos = new ChessPosition(row, col);
         ChessPiece piece = board.getPiece(pos);
 
-        boolean lightSquare = (row + col) % 2 == 0;
-        if (lightSquare) {
+        boolean darkSquare = (row + col) % 2 == 0;
+
+        if (highlightSet != null && highlightSet.contains(pos)) {
+            out.print(SET_BG_COLOR_GREEN);
+            out.print(SET_TEXT_COLOR_BLACK);
+        } else if (darkSquare) {
             out.print(SET_BG_COLOR_BLACK);
             out.print(SET_TEXT_COLOR_WHITE);
         } else {
