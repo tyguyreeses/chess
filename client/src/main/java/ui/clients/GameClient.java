@@ -9,8 +9,10 @@ import exception.ResponseException;
 import model.*;
 import ui.BoardPrinter;
 import ui.websocket.WebsocketFacade;
+import static ui.EscapeSequences.*;
 
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class GameClient {
     public GameData gameData;
@@ -118,7 +120,17 @@ public class GameClient {
     }
 
     private String resign() throws ResponseException {
-        websocket.resignGame(authData.authToken(), gameData.gameID(), websocket.session);
+        System.out.println(SET_TEXT_COLOR_RED + "To confirm resignation, enter 'RESIGN'");
+        // take user input of RESIGN, otherwise cancel resignation
+        Scanner scanner = new Scanner(System.in); // assuming this is a console-based input
+        String input = scanner.nextLine().trim();
+
+        if ("RESIGN".equals(input)) {
+            websocket.resignGame(authData.authToken(), gameData.gameID(), websocket.session);
+            System.out.println("You have resigned the game");
+        } else {
+            System.out.println(SET_TEXT_COLOR_BLUE + "Resignation cancelled");
+        }
         return "";
     }
 
