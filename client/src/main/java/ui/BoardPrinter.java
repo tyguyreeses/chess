@@ -101,8 +101,13 @@ public class BoardPrinter {
         boolean darkSquare = (row + col) % 2 == 0;
 
         if (highlightSet != null && highlightSet.contains(pos)) {
-            out.print(SET_BG_COLOR_GREEN);
-            out.print(SET_TEXT_COLOR_BLACK);
+            if (darkSquare) {
+                out.print(SET_BG_COLOR_DARK_GREEN);
+                out.print(SET_TEXT_COLOR_WHITE);
+            } else {
+                out.print(SET_BG_COLOR_GREEN);
+                out.print(SET_TEXT_COLOR_BLACK);
+            }
         } else if (darkSquare) {
             out.print(SET_BG_COLOR_BLACK);
             out.print(SET_TEXT_COLOR_WHITE);
