@@ -1,6 +1,7 @@
 package ui;
 
 import chess.*;
+import exception.ResponseException;
 import model.GameData;
 
 import java.io.PrintStream;
@@ -30,12 +31,16 @@ public class BoardPrinter {
         drawColumnHeaders(out);
     }
 
-    public void printBoardWithHighlights(ChessPosition selectedPiecePos) {
+    public void printBoardWithHighlights(ChessPosition selectedPiecePos) throws ResponseException {
         PrintStream out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
         out.print(ERASE_SCREEN);
 
         ChessBoard board = game.getBoard();
         ChessPiece piece = board.getPiece(selectedPiecePos);
+
+        if (piece == null) {
+            throw new ResponseException(500, "No piece selected");
+        }
 
         Set<ChessPosition> highlightSet = new HashSet<>();
         highlightSet.add(selectedPiecePos);
