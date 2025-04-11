@@ -4,8 +4,6 @@ import chess.ChessMove;
 import com.google.gson.Gson;
 import exception.ResponseException;
 import websocket.commands.*;
-import websocket.messages.ServerMessage;
-
 import javax.websocket.*;
 import java.net.URI;
 
@@ -33,7 +31,6 @@ public class WebsocketFacade extends Endpoint {
         this.session.addMessageHandler(new MessageHandler.Whole<String>() {
             @Override
             public void onMessage(String message) {
-                System.out.println("Message client received: " + message);
                 gameHandler.printMessage(message);
             }
         });

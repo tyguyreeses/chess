@@ -25,7 +25,7 @@ import java.util.Set;
 @WebSocket
 public class WebSocketHandler {
 
-    WebSocketSessions WSS = new WebSocketSessions();
+    WebSocketSessions wss = new WebSocketSessions();
     Gson gson = new Gson();
     Service service;
 
@@ -71,14 +71,17 @@ public class WebSocketHandler {
 
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
         // add connection to connection manager
-        WSS.addSessionToGame(command.getGameID(), session);
-        GameData gameData = retrieveGameData(command);
-        // tell player to load game
-//        LoadGameMessage message = new LoadGameMessage(gameData);
-//        sendMessage(message, session);
-
+        wss.addSessionToGame(command.getGameID(), session);
         // message everyone else
-        NotificationServerMessage broadcast = new NotificationServerMessage("A player joined the game");
+        String user = getUsername(command);
+        TeamColor color = getPlayerColor(command, retrieveGameData(command));
+        String message;
+        if (color == null) {
+            message = user + " is observing the game";
+        } else {
+            message = user + "joined the game as " + color.toString().toUpperCase();
+        }
+        NotificationServerMessage broadcast = new NotificationServerMessage(message);
         broadcastMessage(command.getGameID(), broadcast, session);
     }
 
@@ -100,7 +103,7 @@ public class WebSocketHandler {
                 // make the move
                 game.makeMove(move);
                 // update database
-                updateGame(gameData);
+                updateGame(gameData.withUpdatedGame(game));
                 // tell everyone to update their game
                 LoadGameMessage lgm = new LoadGameMessage(gameData);
                 broadcastMessage(command.getGameID(), lgm, null);
@@ -131,7 +134,7 @@ public class WebSocketHandler {
         NotificationServerMessage message = new NotificationServerMessage(user + " has left the game");
         broadcastMessage(command.getGameID(), message, session);
         // remove connection
-        WSS.removeSessionFromGame(command.getGameID(), session);
+        wss.removeSessionFromGame(command.getGameID(), session);
     }
 
     private void resignGame(ResignGameCommand command, Session session) throws ResponseException {
@@ -162,7 +165,7 @@ public class WebSocketHandler {
     }
 
     public void broadcastMessage(Integer gameID, ServerMessage message, Session excludedSession) throws ResponseException {
-        Set<Session> sessions = WSS.getSessions(gameID);
+        Set<Session> sessions = wss.getSessions(gameID);
         for (Session session : sessions) {
             if (!session.equals(excludedSession)) {
                 try {

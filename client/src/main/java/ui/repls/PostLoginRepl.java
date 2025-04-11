@@ -3,7 +3,7 @@ package ui.repls;
 import exception.ResponseException;
 import model.*;
 import ui.ServerFacade;
-import ui.clients.myPair;
+import ui.clients.MyPair;
 import ui.clients.PostLoginClient;
 
 import java.util.List;
@@ -33,11 +33,11 @@ public class PostLoginRepl {
 
                 try {
                     result = client.eval(line);
-                    if (result instanceof myPair) {
-                        int gameID = ((myPair) result).gameID();
+                    if (result instanceof MyPair) {
+                        int gameID = ((MyPair) result).gameID();
                         GameData gameData = retrieveGameData(gameID);
                         // run the gameREPL
-                        new GameUI(authData, ((myPair) result).color(), gameData, facade.port).run();
+                        new GameUI(authData, ((MyPair) result).color(), gameData, facade.port).run();
                     } else {
                         System.out.print(SET_TEXT_COLOR_BLUE + result);
                     }

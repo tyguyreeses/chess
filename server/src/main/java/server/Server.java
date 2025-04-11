@@ -18,14 +18,14 @@ public class Server {
     Gson gson = new Gson();
     public DataAccess dataAccess = new SqlDataAccess();
     public Service service = new Service(dataAccess);
-    public WebSocketHandler WSHandler = new WebSocketHandler(service);
+    public WebSocketHandler wsHandler = new WebSocketHandler(service);
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
 
-        Spark.webSocket("/ws", WSHandler);
+        Spark.webSocket("/ws", wsHandler);
 
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", this::clearData);

@@ -56,6 +56,7 @@ public class GameUI implements GameHandler {
                 case LOAD_GAME -> {
                     LoadGameMessage lgm = gson.fromJson(message, LoadGameMessage.class);
                     this.gameData = lgm.game;
+                    client.gameData = lgm.game;
                     client.drawBoard(color);
                 }
                 case NOTIFICATION -> {
@@ -73,7 +74,7 @@ public class GameUI implements GameHandler {
     }
 
     private void printNotification(NotificationServerMessage message) {
-        System.out.println(SET_TEXT_COLOR_RED + message.message);
+        System.out.println(SET_TEXT_COLOR_BLUE + message.message + "\n");
     }
 
     private void printError(ErrorServerMessage message) {
