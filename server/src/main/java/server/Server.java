@@ -28,6 +28,7 @@ public class Server {
         Spark.webSocket("/ws", wsHandler);
 
         // Register your endpoints and handle exceptions here.
+        Spark.get("/hello", this::hello);
         Spark.delete("/db", this::clearData);
         Spark.post("/user", this::registerUser);
         Spark.post("/session", this::loginUser);
@@ -52,6 +53,11 @@ public class Server {
     private void exceptionHandler(ResponseException ex, Request req, Response res) {
         res.status(ex.statusCode());
         res.body(ex.toJson());
+    }
+
+    private Object hello(Request req, Response res) throws ResponseException {
+         String message = "You've connected to the service!";
+         return gson.toJson(message);
     }
 
     private Object clearData(Request req, Response res) throws ResponseException {

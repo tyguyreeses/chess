@@ -65,6 +65,11 @@ public class ServerFacade {
         this.makeRequest("PUT", path, requestBody, null, authToken);
     }
 
+    public String hello() throws ResponseException {
+        var path = "/hello";
+        return this.makeRequest("GET", path, null, String.class, null);
+    }
+
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, String authToken) throws ResponseException {
         try {

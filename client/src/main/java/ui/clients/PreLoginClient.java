@@ -22,6 +22,7 @@ public class PreLoginClient {
             return switch (cmd.toLowerCase()) {
                 case "l", "login" -> login(params);
                 case "r", "register" -> register(params);
+                case "hello" -> hello();
                 case "q", "quit" -> "quit";
                 default -> help();
             };
@@ -44,6 +45,10 @@ public class PreLoginClient {
             return facade.registerUser(new UserData(params[0], params[1], params[2]));
         }
         throw new ResponseException(400, "Expected format: <USERNAME> <PASSWORD> <EMAIL>");
+    }
+
+    public String hello() throws ResponseException {
+        return facade.hello();
     }
 
     public String help() {
