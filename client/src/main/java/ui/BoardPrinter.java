@@ -44,7 +44,7 @@ public class BoardPrinter {
 
         Set<ChessPosition> highlightSet = new HashSet<>();
         highlightSet.add(selectedPiecePos);
-        if (piece != null && piece.getTeamColor() == color) {
+        if (piece != null) {
             var validMoves = game.validMoves(selectedPiecePos);
             for (ChessMove move : validMoves) {
                 highlightSet.add(move.getEndPosition());

@@ -84,6 +84,14 @@ public class ChessBoard implements Cloneable{
         if (move.getPromotionPiece() != null) {
             ChessPiece newPiece = new ChessPiece(piece.getTeamColor(), move.getPromotionPiece());
             this.addPiece(move.getEndPosition(), newPiece);
+        // if it's a king, update the king position
+        } else if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+            if (piece.getTeamColor() == ChessGame.TeamColor.BLACK) {
+                blackKingPos = move.getEndPosition();
+            } else {
+                whiteKingPos = move.getEndPosition();
+            }
+            this.addPiece(move.getEndPosition(), piece);
         } else {
             // otherwise just add the original piece
             this.addPiece(move.getEndPosition(), piece);

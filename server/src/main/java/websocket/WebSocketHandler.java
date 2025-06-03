@@ -17,6 +17,8 @@ import websocket.messages.ErrorServerMessage;
 import websocket.messages.LoadGameMessage;
 import websocket.messages.NotificationServerMessage;
 import websocket.messages.ServerMessage;
+
+import javax.websocket.MessageHandler;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Objects;
@@ -71,8 +73,8 @@ public class WebSocketHandler {
 
     private void connect(ConnectGameCommand command, Session session) throws ResponseException {
         // tell client to load game
-        LoadGameMessage lgm = new LoadGameMessage(retrieveGameData(command));
-        sendMessage(lgm, session);
+//        LoadGameMessage lgm = new LoadGameMessage(retrieveGameData(command));
+//        sendMessage(lgm, session);
         // message everyone else
         String user = getUsername(command);
         TeamColor color = getPlayerColor(command, retrieveGameData(command));
@@ -95,25 +97,61 @@ public class WebSocketHandler {
             ChessMove move = command.getMove();
             GameData gameData = retrieveGameData(command);
             ChessGame game = gameData.game();
+            String userName = getUsername(command);
+
+            TeamColor color;
+            TeamColor opponentColor;
+            if (Objects.equals(getUsername(command), gameData.whiteUsername())) {
+                color = TeamColor.WHITE;
+                opponentColor = TeamColor.BLACK;
+            } else {
+                color = TeamColor.BLACK;
+                opponentColor = TeamColor.WHITE;
+            }
+
+            String opponentUsername = color == TeamColor.WHITE ? gameData.blackUsername() : gameData.whiteUsername();
+
             if (game.gameOver) {
                 throw new ResponseException(500, "Invalid move, game is over");
             }
 
             // retrieve player data and confirm the right player is making the move
             checkCorrectPlayer(command, gameData, move);
+            ChessPiece movedPiece = gameData.game().getBoard().getPiece(move.getStartPosition());
 
             // if a valid move
             if (game.validMoves(move.getStartPosition()).contains(move)) {
                 // make the move
                 game.makeMove(move);
+
+                // check if checkmate or stalemate
+                if (game.isInCheckmate(opponentColor) || game.isInStalemate(opponentColor)) {
+                    game.gameOver = true;
+                }
+
                 // update database
                 updateGame(gameData.withUpdatedGame(game));
                 // tell everyone to update their game
                 LoadGameMessage lgm = new LoadGameMessage(gameData);
                 broadcastMessage(command.getGameID(), lgm, null);
                 // tell everyone but root client what move was made
-                NotificationServerMessage nsm = new NotificationServerMessage("Move was made: " + move);
+                NotificationServerMessage nsm = new NotificationServerMessage(getUsername(command) + " made move: " + move);
                 broadcastMessage(command.getGameID(), nsm, session);
+
+
+                // check if checkmate or stalemate
+                if (game.isInCheckmate(opponentColor)) {
+                    NotificationServerMessage checkMate = new NotificationServerMessage(opponentUsername + " is in checkmate");
+                    broadcastMessage(command.getGameID(), checkMate, null);
+                } else if (game.isInCheck(opponentColor)) {
+                        NotificationServerMessage check = new NotificationServerMessage(opponentUsername + " is in check");
+                        broadcastMessage(command.getGameID(), check, null);
+                    }
+                if (game.isInStalemate(opponentColor)) {
+                    NotificationServerMessage staleMate = new NotificationServerMessage(opponentUsername + " is in stalemate");
+                    broadcastMessage(command.getGameID(), staleMate, null);
+                }
+
             // if not a valid move
             } else {
                 throw new ResponseException(500, "Invalid move");
